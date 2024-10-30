@@ -6,11 +6,15 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-    runtime: nvidia
-    volumes:
+    volumes: # docker run -v
       - .:/app/mando-hgt
       #- ./hgt:/app/hgt
-    devices:
-      - /dev/nvidia0:/dev/nvidia0
-      - /dev/nvidiactl:/dev/nvidiactl
-      - /dev/nvidia-uvm:/dev/nvidia-uvm
+    working_dir: /app/mando-hgt
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    tty: true # not stop after build = docker run -t
