@@ -618,7 +618,7 @@ if __name__ == '__main__':
         #############################  
         # Change here!
         source = f'{ROOT}/{bug}/curated'
-        specific_name = "Null/" # Leave empty for default
+        specific_name = "" # Leave empty for default
         output_CG_path = f'{ROOT}/{specific_name}{bug}/curated/cg_compressed_graphs.gpickle'
         print(f"{Back.CYAN}OUTPUT: {output_CG_path}{Style.RESET_ALL}")
         #############################

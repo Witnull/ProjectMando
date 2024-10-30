@@ -141,7 +141,7 @@ if __name__ == '__main__':
         #############################  
         # Change here!
         source = f'{ROOT}/{bug}/curated'
-        specific_name = "Null/" # Leave empty for default
+        specific_name = "" # Leave empty for default
         output_CFGxCG_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_cg_compressed_graphs.gpickle'
         
         input_cfg_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_compressed_graphs.gpickle'

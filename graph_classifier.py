@@ -197,15 +197,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('MANDO Graph Classifier')
     parser.add_argument('-s', '--seed', type=int, default=1,
                         help='Random seed')
+    
     archive_params = parser.add_argument_group(title='Storage', description='Directories for util results')
     archive_params.add_argument('-ld', '--log_dir', type=str, default='./logs/graph_classification', help='Directory for saving training logs and visualization')
     archive_params.add_argument('--output_models', type=str, default='./models/call_graph', help='Where you want to save your models')
+    
     dataset_params = parser.add_argument_group(title='Dataset', description='Dataset paths')
     dataset_params.add_argument('--compressed_graph', type=str, default='./dataset/call_graph/compressed_graph/compress_call_graphs_no_solidity_calls.gpickle', help='Compressed graphs of dataset which was extracted by graph helper tools')
     dataset_params.add_argument('--dataset', type=str, default='./dataset/aggregate/source_code', help='Dicrectory of all souce code files which were used to extract the compressed graph')
     dataset_params.add_argument('--testset', type=str, default='./dataset/smartbugs/source_code', help='Dicrectory of all souce code files which is a partition of the dataset for testing')
     dataset_params.add_argument('--label', type=str, default='./dataset/aggregate/labels.json', help='Label of sources in source code storage')
     dataset_params.add_argument('--checkpoint', type=str, default='./models/ijcai2020_smartbugs/han_fold_1.pth', help='Checkpoint of trained models')
+   
     node_feature_params = parser.add_argument_group(title='Node feature', description='Define the way to get node features')
     node_feature_params.add_argument('--feature_extractor', type=str, default='./models/metapath2vec_cfg/han_fold_1.pth', help='If "node_feature" is "GAE" or "LINE" or "Node2vec", we need a extracted features from those models')
     node_feature_params.add_argument('--node_feature', type=str, default='metapath2vec', help='Kind of node features we want to use, here is one of "nodetype", "metapath2vec", "han", "gae", "line", "node2vec"')

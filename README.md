@@ -64,8 +64,8 @@ Nguyen, H. H., Nguyen, N.M., Xie, C., Ahmadi, Z., Kudenko, D., Doan, T. N., & Ji
   - [Visuallization](#visuallization)
 
 # How to train the models?
-# How to run in newer versions?: 
-- [How 2 run](How2Run.md)
+# How to run in newer version on Docker?
+- Refer here [How 2 run](How2Run.md)
 
 ## Dataset
 
