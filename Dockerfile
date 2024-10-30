@@ -65,6 +65,9 @@ RUN python3.10 -m pip install --no-cache-dir "numpy==1.26.4"
 #Install Graphviz
 RUN apt-get update && apt-get install -y graphviz libgraphviz-dev
 
+#Install DGL, torch and its friends. :)))
+RUN pip install  dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
+
 RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
 
 # Default command
