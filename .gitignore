@@ -23,5 +23,9 @@ results/
 *.json
 forensics/graph_hiddends/*
 experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/*
+experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/*
 experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/*
+experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/*
+experiments/ge-sc-data/byte_code/smartbugs/cryptic_evm/*
 Mando/*
+experiments/ge-sc-data/smartbugs-wild-clean-contracts/*

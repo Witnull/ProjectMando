@@ -20,6 +20,7 @@ from sco_models.model_hgt import HGTVulNodeClassifier
 from sco_models.utils import score, get_classification_report, get_confusion_matrix, dump_result
 from sco_models.visualization import visualize_average_k_folds
 
+from utils.node_classification_logging import NodeClassificationLogger
 
 def get_binary_mask(total_size, indices):
     mask = torch.zeros(total_size)
@@ -37,6 +38,15 @@ def get_node_ids(graph, source_files):
 
 
 def main(args):
+     # Initialize logger
+    logger = NodeClassificationLogger()
+    logger.log_metadata(args)
+    
+    epochs = args['num_epochs']
+    k_folds = args['k_folds']
+    device = args['device']
+
+
     epochs = args['num_epochs']
     k_folds = args['k_folds']
     device = args['device']
@@ -137,54 +147,94 @@ def main(args):
         val_mask = val_mask.bool()
         test_mask = test_mask.bool()
     retain_graph = True if args['node_feature'] == 'han' else False
-    for epoch in range(epochs):
-        print('Fold {} - Epochs {}'.format(fold, epoch))
-        optimizer.zero_grad()
-        logits = model()
-        logits = logits.to(args['device'])
-        train_loss = loss_fcn(logits[train_mask], targets[train_mask])
-        train_loss.backward(retain_graph=retain_graph)
-        optimizer.step()
-        scheduler.step()
-        train_acc, train_micro_f1, train_macro_f1, train_buggy_f1 = score(targets[train_mask], logits[train_mask])
-        # print('Train Loss: {:.4f} | Train Micro f1: {:.4f} | Train Macro f1: {:.4f} | Train Accuracy: {:.4f}'.format(
-        #         train_loss.item(), train_micro_f1, train_macro_f1, train_acc))
-        val_loss = loss_fcn(logits[val_mask], targets[val_mask]) 
-        val_acc, val_micro_f1, val_macro_f1, val_buggy_f1 = score(targets[val_mask], logits[val_mask])
-        print('Val Loss:   {:.4f} | Val Micro f1:   {:.4f} | Val Macro f1:   {:.4f} | Val Accuracy:   {:.4f}'.format(
-                val_loss.item(), val_micro_f1, val_macro_f1, val_acc))
-
-        train_results[fold]['loss'].append(train_loss)
-        train_results[fold]['micro_f1'].append(train_micro_f1)
-        train_results[fold]['macro_f1'].append(train_macro_f1)
-        train_results[fold]['buggy_f1'].append(train_buggy_f1)
-        train_results[fold]['acc'].append(train_acc)
-        train_results[fold]['lrs'] += scheduler.get_last_lr()
-
-        val_results[fold]['loss'].append(val_loss)
-        val_results[fold]['micro_f1'].append(val_micro_f1)
-        val_results[fold]['macro_f1'].append(val_macro_f1)
-        val_results[fold]['buggy_f1'].append(val_buggy_f1)
-        val_results[fold]['acc'].append(val_acc)
-    print('Saving model fold {}'.format(fold))
-    # dump_result(targets[val_mask], logits[val_mask], os.path.join(args['output_models'], f'confusion_{fold}.csv'))
-    # save_path = os.path.join(args['output_models'])
-    # torch.save(model.state_dict(), save_path)
-    torch.save(model.state_dict(), args['output_models'])
-    print('Testing phase')
-    print(f'Testing on {len(test_ids)} nodes')
-    model.eval()
-    with torch.no_grad():
-        logits = model()
-        logits = logits.to(args['device'])
-        test_acc, test_micro_f1, test_macro_f1, test_buggy_f1 = score(targets[test_mask], logits[test_mask])
-        print('Test Micro f1:   {:.4f} | Test Macro f1:   {:.4f} | Test Accuracy:   {:.4f}'.format(test_micro_f1, test_macro_f1, test_acc))
-        print('Classification report', '\n', get_classification_report(targets[test_mask], logits[test_mask]))
-        print('Confusion matrix', '\n', get_confusion_matrix(targets[test_mask], logits[test_mask]))
-    return train_results, val_results
+    for fold in range(k_folds):
+        model.reset_parameters()
+        model.to(device)
+        
+        print(f'Start training fold {fold} with {len(train_ids)}/{len(val_ids)} train/val smart contracts')
+        
+        for epoch in range(epochs):
+            # Training step
+            model.train()
+            optimizer.zero_grad()
+            logits = model()
+            logits = logits.to(args['device'])
+            
+            # Calculate training metrics
+            train_loss = loss_fcn(logits[train_mask], targets[train_mask])
+            train_loss.backward(retain_graph=retain_graph)
+            optimizer.step()
+            scheduler.step()
+            
+            train_acc, train_micro_f1, train_macro_f1, train_buggy_f1 = score(
+                targets[train_mask], logits[train_mask])
+            
+            # Log training stats
+            train_stats = {
+                'loss': train_loss.item(),
+                'acc': train_acc,
+                'micro_f1': train_micro_f1,
+                'macro_f1': train_macro_f1,
+                'buggy_f1': train_buggy_f1,
+                'learning_rate': scheduler.get_last_lr()[0]
+            }
+            logger.log_training_stats(fold, epoch, train_stats)
+            
+            # Validation step
+            model.eval()
+            with torch.no_grad():
+                val_loss = loss_fcn(logits[val_mask], targets[val_mask])
+                val_acc, val_micro_f1, val_macro_f1, val_buggy_f1 = score(
+                    targets[val_mask], logits[val_mask])
+                
+                # Log validation stats
+                val_stats = {
+                    'loss': val_loss.item(),
+                    'acc': val_acc,
+                    'micro_f1': val_micro_f1,
+                    'macro_f1': val_macro_f1,
+                    'buggy_f1': val_buggy_f1
+                }
+                logger.log_validation_stats(fold, epoch, val_stats)
+            
+            print(f'Epoch {epoch}: Train Loss: {train_loss.item():.4f}, Val Loss: {val_loss.item():.4f}')
+        
+        # After training, generate plots
+        logger.plot_training_curves(fold)
+        
+        # Save model
+        model_save_path = os.path.join(logger.session_dir, 'models', f'model_fold_{fold}.pth')
+        torch.save(model.state_dict(), model_save_path)
+        
+        # Testing phase
+        model.eval()
+        with torch.no_grad():
+            logits = model()
+            logits = logits.to(args['device'])
+            test_acc, test_micro_f1, test_macro_f1, test_buggy_f1 = score(
+                targets[test_mask], logits[test_mask])
+            
+            # Get confusion matrix and classification report
+            conf_matrix = get_confusion_matrix(targets[test_mask], logits[test_mask])
+            class_report = get_classification_report(targets[test_mask], logits[test_mask])
+            
+            # Log test results
+            test_results = {
+                'accuracy': test_acc,
+                'micro_f1': test_micro_f1,
+                'macro_f1': test_macro_f1,
+                'buggy_f1': test_buggy_f1,
+                'classification_report': class_report,
+                'confusion_matrix': conf_matrix.tolist()
+            }
+            logger.log_test_results(fold, test_results)
+            logger.plot_confusion_matrix(fold, conf_matrix)
+            
+    return logger.train_logs, logger.validation_logs
 
 
 if __name__ == '__main__':
+    
     import argparse
 
     parser = argparse.ArgumentParser('MANDO Node Classifier')

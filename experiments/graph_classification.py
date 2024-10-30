@@ -636,11 +636,11 @@ def main(device):
             # Run experiments
             # Base lines
             # base_metapath2vec(compressed_graph, file_name_dict, dataset, bugtype, device)
-            # base_line(dataset, bugtype, line_embedded, file_name_dict, device)
-            # base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device)
+            base_line(dataset, bugtype, line_embedded, file_name_dict, device)
+            base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device)
 
-            ## Out models
-            nodetype(compressed_graph, dataset, None, bugtype, device)
+            ## Our models
+            #nodetype(compressed_graph, dataset, None, bugtype, device)
             # metapath2vec(compressed_graph, dataset, None, bugtype, device)
             # gae(compressed_graph, dataset, line_embedded, bugtype, device)
             # line(compressed_graph, dataset, line_embedded, bugtype, device)

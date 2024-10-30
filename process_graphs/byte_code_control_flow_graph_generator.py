@@ -16,6 +16,12 @@ from tqdm import tqdm
 from slither.slither import Slither
 import logging
 
+import colorama
+from colorama import Fore, Style, Back
+# Initialize colorama for Windows compatibility
+colorama.just_fix_windows_console()
+
+
 EDGE_DICT = {('None', 'None', 'None'): '0', ('None', 'None', 'orange'): '1', ('Msquare', 'None', 'gold'): '2', ('None', 'None', 'lemonchiffon'): '3', ('Msquare', 'crimson', 'crimson'): '4', ('None', 'None', 'crimson'): '5', ('Msquare', 'crimson', 'None'): '6', ('Msquare', 'crimson', 'lemonchiffon'): '7'}
 DRY_RUNS = 0
 
@@ -235,22 +241,49 @@ def generate_evm(crytic_evm_path, creation_output, runtime_output):
     os.makedirs(creation_output, exist_ok=True)
     os.makedirs(runtime_output, exist_ok=True)
     byte_codes = [f for f in os.listdir(crytic_evm_path) if f.endswith('.json')]
+    success = 0 
+
     for bc in byte_codes:
-        with open(join(crytic_evm_path, bc), 'r') as f:
-            annotation = json.load(f)
-        details = list(annotation['compilation_units'].values())[0]['contracts']
-        for sc in details.keys():
-            creation_code = details[sc]['bin']
-            runtime_code = details[sc]['bin-runtime']
-            if len(creation_code) == 0:
-                assert len(creation_code) == len(runtime_code)
+        try:
+            with open(join(crytic_evm_path, bc), 'r') as f:
+                annotation = json.load(f)
+
+            details = list(annotation['compilation_units'].values())[0]
+
+            # Handle different JSON structures
+            if 'contracts' in details:
+                details = details['contracts']
+            elif 'source_units' in details:
+                first_unit_key = next(iter(details['source_units']))
+                details = details['source_units'][first_unit_key]['contracts']
+            else:
+                print(f"{Fore.YELLOW}[SKIP] Warning: No 'contracts' key found in {bc}{Style.RESET_ALL}")
+                print(f"Available keys: {list(details.keys())}")
                 continue
-            creation_file_name = bc.replace('.sol.json', f'-{sc}.evm')
-            runtime_file_name = bc.replace('.sol.json', f'-{sc}.evm')
-            with open(join(creation_output, creation_file_name), 'w') as f:
-                f.write(creation_code)
-            with open(join(runtime_output, runtime_file_name), 'w') as f:
-                f.write(runtime_code)
+
+            print(f"Processing... {crytic_evm_path}")
+           
+            for sc in details.keys():
+                creation_code = details[sc]['bin']
+                runtime_code = details[sc]['bin-runtime']
+                if len(creation_code) == 0:
+                    assert len(creation_code) == len(runtime_code)
+                    continue
+                creation_file_name = bc.replace('.sol.json', f'-{sc}.evm')
+                runtime_file_name = bc.replace('.sol.json', f'-{sc}.evm')
+                with open(join(creation_output, creation_file_name), 'w') as f:
+                    f.write(creation_code)
+                with open(join(runtime_output, runtime_file_name), 'w') as f:
+                    f.write(runtime_code)
+                print(f'{Fore.GREEN} Created {join(creation_output, creation_file_name)} and {join(runtime_output, runtime_file_name)}{Style.RESET_ALL}')
+                success +=1
+        except json.JSONDecodeError:
+            print(f"{Fore.RED}Error: Invalid JSON format in {crytic_evm_path+bc}{Style.RESET_ALL}")
+            continue
+        except Exception as e:
+            print(f"{Fore.RED}Error processing {crytic_evm_path+bc}: {str(e)}{Style.RESET_ALL}")
+            continue
+    print(f"{Fore.CYAN}Created: {success} files created success{Style.RESET_ALL}")
 
 
 def generate_graph_from_evm(evm_path, output, evm_type):
@@ -258,8 +291,10 @@ def generate_graph_from_evm(evm_path, output, evm_type):
     code_type = '-c' if evm_type == 'creation' else '-r'
     evm_files = [f for f in os.listdir(evm_path) if f.endswith('.evm')]
     for evm in evm_files:
-        evm_file = join(evm_path, evm)
-        subprocess.run(['java', '-jar', 'EtherSolve.jar', code_type, '-d', '-o', join(output, evm.replace('.evm', '.dot')), evm_file])
+        if evm.endswith('.evm'):
+            evm_file = join(evm_path, evm)
+            print(f"{Fore.CYAN}[INFO] Processing: {evm_file}{Style.RESET_ALL}")
+            subprocess.run(['java', '-jar', 'EtherSolve.jar', code_type, '-d', '-o', join(output, evm.replace('.evm', '.dot')), evm_file])
 
 
 ## Dump to file to save time
@@ -358,65 +393,120 @@ def _convert_solidifi_annotation_to_dict(solidifi_annotation, output=None):
             json.dump(solidifi_dict, f, indent=4)
     return solidifi_dict
 
+def print_info():
+    '''
+    Print information about the script.
+    Color rule:
+    Success: Green
+    Warning: Yellow , or RED background
+    Error: Red
+    Info: Cyan
+    Action: Blue
+    '''
+    print("\n\n ###################### INFO ##################### \n\n")
+    print(f"Usage: python byte_code_control_flow_graph_generator.py")
+    print(f"{Fore.CYAN} Mainly for baselines. {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [1] Generate annotation files. {Fore.YELLOW}(Required for option 2){Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [2a] Generate creation files. {Fore.YELLOW}(Required for option 3, 4, 5){Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [2b] Generate runtime files. {Fore.YELLOW}(Required for option 3, 4, 5){Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [3] Generate graph from evm files by EtherSolve.{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [4] Create balanced dataset.{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [5] Merge .gpickles files into {Fore.YELLOW}compressred_graph.gpickle {Fore.CYAN} file.{Style.RESET_ALL}")
+
+    print(f"\n{Fore.YELLOW}Note: Might need to unzip the file experiments/ge-sc-data/smartbugs-wild-2742-clean-contracts.zip to experiments/ge-sc-data/smartbugs-wild-clean-contracts  {Style.RESET_ALL}")
+    print(f"\n{Fore.YELLOW}No command-line arguments are required. Modify the script to change paths and bug types.{Style.RESET_ALL}")
+    # Function to wait for user input before proceeding
+
+    print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
+
+    option = input(f"{Back.BLUE}Please input your option (1, 2a,2b ,4 ,5):{Style.RESET_ALL}")
+    if option not in ['1', '2a', '2b', '3','4','5']:
+        print(f"{Fore.RED}Invalid option. Please input 1, 2a ,2b ,3 ,4 or 5.{Style.RESET_ALL}")
+        sys.exit(1)
+    return option
+
+
 
 if __name__ == '__main__':
     bug_type = {'access_control': 57, 'arithmetic': 60, 'denial_of_service': 46,
               'front_running': 44, 'reentrancy': 71, 'time_manipulation': 50, 
               'unchecked_low_level_calls': 95}
-
+    option = print_info()
     # # Forencis gpickle graph
     # source_compressed_graph = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_compressed_graphs.gpickle'
     # # forencis_gpickle(source_compressed_graph)
     # forencis_gpickle(source_compressed_graph)
-    
-    # # Create annotation file
-    # clean_source_code = './ge-sc-data/smartbugs-wild-clean-contracts'
-    # clean_source_files = [f for f in os.listdir(clean_source_code) if f.endswith('.sol')]
-    # curated_annotation_path = './data/smartbug-dataset/vulnerabilities.json'
-    # # CURATED_DICT = _convert_curated_annotation_to_dict(curated_annotation_path, join('./experiments/ge-sc-data/source_code', 'curated_labels.json'))
-    # with open(join('./experiments/ge-sc-data/source_code', 'curated_labels.json'), 'r') as f:
-    #     CURATED_DICT = json.load(f)
-    # for bug, count in bug_type.items():
-    #     sourcecode_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/'
-    #     output_label = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}'
-    #     os.makedirs(output_label, exist_ok=True)
-    #     output_label = join(output_label, 'contract_labels.json')
-    #     # output_label = join(sourcecode_path, 'contract_labels.json')
-    #     solidifi_annotation_path = f'./data/solidifi_buggy_contracts/{bug}/vulnerabilities.json'
-    #     # SOLIDIFI_DICT = _convert_solidifi_annotation_to_dict(solidifi_annotation_path, join(sourcecode_path, 'solidifi_labels.json'))
-    #     with open(join(sourcecode_path, 'solidifi_labels.json'), 'r') as f:
-    #         SOLIDIFI_DICT = json.load(f)
-    #     # source_code_category = create_source_code_category(sourcecode_path, clean_source_files, join(sourcecode_path, 'contract_details.json'))
-    #     source_code_category_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/source_code_category.json'
-    #     with open(source_code_category_path, 'r') as f:
-    #         source_code_category = json.load(f)
-    #     generate_evm_annotations(source_code_category, CURATED_DICT, SOLIDIFI_DICT, bug, output_label)
+    if option == '1':
+        print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] Generating annotation files...{Style.RESET_ALL}')
+        
+        # Create annotation file
+        clean_source_code = './experiments/ge-sc-data/smartbugs-wild-clean-contracts'
+        clean_source_files = [f for f in os.listdir(clean_source_code) if f.endswith('.sol')]
+        curated_annotation_path = './data/smartbug-dataset/vulnerabilities.json'
+        # CURATED_DICT = _convert_curated_annotation_to_dict(curated_annotation_path, join('./experiments/ge-sc-data/source_code', 'curated_labels.json'))
+        with open(join('./experiments/ge-sc-data/source_code', 'curated_labels.json'), 'r') as f:
+            CURATED_DICT = json.load(f)
+        for bug, count in bug_type.items():
+            sourcecode_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/'
+            output_label = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}'
+            os.makedirs(output_label, exist_ok=True)
+            output_label = join(output_label, 'contract_labels.json')
+            # output_label = join(sourcecode_path, 'contract_labels.json')
+            solidifi_annotation_path = f'./data/solidifi_buggy_contracts/{bug}/vulnerabilities.json'
+            # SOLIDIFI_DICT = _convert_solidifi_annotation_to_dict(solidifi_annotation_path, join(sourcecode_path, 'solidifi_labels.json'))
+            with open(join(sourcecode_path, 'solidifi_labels.json'), 'r') as f:
+                SOLIDIFI_DICT = json.load(f)
+            # source_code_category = create_source_code_category(sourcecode_path, clean_source_files, join(sourcecode_path, 'contract_details.json'))
+            source_code_category_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/source_code_category.json'
+            with open(source_code_category_path, 'r') as f:
+                source_code_category = json.load(f)
+            generate_evm_annotations(source_code_category, CURATED_DICT, SOLIDIFI_DICT, bug, output_label)
+
+            print(f'{Fore.GREEN} Annotation file for {bug} has been created at {Fore.YELLOW}{output_label}{Style.RESET_ALL}')
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} You can now proceeds to option 2{Style.RESET_ALL}')
+        sys.exit(0)
 
 
-    # get_contract_code_line('./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/0x0a5dc2204dfc6082ef3bbcfc3a468f16318c4168.sol')
+    if option == '2a':
+        # get_contract_code_line('./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/0x0a5dc2204dfc6082ef3bbcfc3a468f16318c4168.sol')
+        print(f'{Fore.GREEN} [INFO] Annotation files have been all created successfully.{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
+        # Generate crytic evm files
+        for bug, counter in bug_type.items():
+            sourcecode_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{counter}_buggy_curated_0'
+            output = f'./experiments/ge-sc-data/byte_code/smartbugs/crytic_evm/{bug}/clean_{counter}_buggy_curated_0'
+            generate_crytic_evm(sourcecode_path, output)
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} You can now proceeds to option 2b {Style.RESET_ALL}')
+        sys.exit(0)
 
-    # # Generate crytic evm files
-    # for bug, counter in bug_type.items():
-    #     sourcecode_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{counter}_buggy_curated_0'
-    #     output = f'./experiments/ge-sc-data/byte_code/smartbugs/crytic_evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     generate_crytic_evm(sourcecode_path, output)
+    if option == '2b':
+        print(f'{Fore.CYAN} [INFO] Generating creation and runtime files...{Style.RESET_ALL}')
+        # Generate creation & runtime evm files
+        for bug, counter in bug_type.items():
+            crytic_evm_path = f'./experiments/ge-sc-data/byte_code/smartbugs/crytic_evm/{bug}/clean_{counter}_buggy_curated_0'
+            creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/evm/{bug}/clean_{counter}_buggy_curated_0'
+            runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/{bug}/clean_{counter}_buggy_curated_0'
+            generate_evm(crytic_evm_path, creation_output, runtime_output)
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} You can now proceeds to option 3 {Style.RESET_ALL}')
+        sys.exit(0)
 
-    # # Generate creation & runtime evm files
-    # for bug, counter in bug_type.items():
-    #     crytic_evm_path = f'./experiments/ge-sc-data/byte_code/smartbugs/crytic_evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     generate_evm(crytic_evm_path, creation_output, runtime_output)
+    if option == '3':
+        print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve...{Style.RESET_ALL}')
+        # Generate graph from evm files by EtherSolve
+        for bug, counter in bug_type.items():
+            creation_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/evm/{bug}/clean_{counter}_buggy_curated_0'
+            creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
+            generate_graph_from_evm(creation_path, creation_output, 'creation')
+            runtime_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/{bug}/clean_{counter}_buggy_curated_0'
+            runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
+            generate_graph_from_evm(runtime_path, runtime_output, 'runtime')        
 
-    # # Generate graph from evm files by EtherSolve
-    # for bug, counter in bug_type.items():
-    #     creation_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
-    #     generate_graph_from_evm(creation_path, creation_output, 'creation')
-    #     runtime_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/evm/{bug}/clean_{counter}_buggy_curated_0'
-    #     runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
-    #     generate_graph_from_evm(runtime_path, runtime_output, 'runtime')        
-
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        sys.exit(0)
 
     # # Convert dot to gpickle
     # for bug, counter in bug_type.items():
@@ -432,93 +522,109 @@ if __name__ == '__main__':
     #         dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
     #     for dot in runtime_dot_files:
     #         dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
+    if option == '4':
+        print(f'{Fore.CYAN} [INFO] Generating balanced dataset...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2 {Style.RESET_ALL}')
+        # Filter dataset
+        HAVE_CLEAN = True
+        for bug, count in bug_type.items():
+            source_code_category_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/source_code_category.json'
+            creation_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0'
+            creation_gpickle_files = [f for f in os.listdir(creation_gpickle_path) if f.endswith('.gpickle')]
+            runtime_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0'
+            runtime_gpickle_files = [f for f in os.listdir(runtime_gpickle_path) if f.endswith('.gpickle')]
+            with open(source_code_category_path, 'r') as f:
+                    source_code_category = json.load(f)
+            curated_files = list(source_code_category['curated'].keys())
+            solidifi_files = list(source_code_category['solidifi'].keys())
+            clean_files = list(source_code_category['clean'].keys())
+            annotation_path = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/contract_labels.json'
+            with open(annotation_path, 'r') as f:
+                contract_labels = json.load(f)
+            creation_balance_dataset = []
+            runtime_balance_dataset = []
+            creation_buggy_count = 0
+            runtime_buggy_count = 0
+            for contract in contract_labels:
+                source_name = contract['contract_name'].split('-')[0] + '.sol'
+                gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
+                if source_name in curated_files or source_name in solidifi_files:
+                    if gpickle_name in creation_gpickle_files:
+                        creation_balance_dataset.append(contract)
+                        creation_buggy_count += contract['targets']
+                    if gpickle_name in runtime_gpickle_files:
+                        runtime_balance_dataset.append(contract)
+                        runtime_buggy_count += contract['targets']
 
-    # # Filter dataset
-    # HAVE_CLEAN = True
-    # for bug, count in bug_type.items():
-    #     source_code_category_path = f'./experiments/ge-sc-data/source_code/{bug}/clean_{count}_buggy_curated_0/source_code_category.json'
-    #     creation_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0'
-    #     creation_gpickle_files = [f for f in os.listdir(creation_gpickle_path) if f.endswith('.gpickle')]
-    #     runtime_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0'
-    #     runtime_gpickle_files = [f for f in os.listdir(runtime_gpickle_path) if f.endswith('.gpickle')]
-    #     with open(source_code_category_path, 'r') as f:
-    #             source_code_category = json.load(f)
-    #     curated_files = list(source_code_category['curated'].keys())
-    #     solidifi_files = list(source_code_category['solidifi'].keys())
-    #     clean_files = list(source_code_category['clean'].keys())
-    #     annotation_path = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/contract_labels.json'
-    #     with open(annotation_path, 'r') as f:
-    #         contract_labels = json.load(f)
-    #     creation_balance_dataset = []
-    #     runtime_balance_dataset = []
-    #     creation_buggy_count = 0
-    #     runtime_buggy_count = 0
-    #     for contract in contract_labels:
-    #         source_name = contract['contract_name'].split('-')[0] + '.sol'
-    #         gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
-    #         if source_name in curated_files or source_name in solidifi_files:
-    #             if gpickle_name in creation_gpickle_files:
-    #                 creation_balance_dataset.append(contract)
-    #                 creation_buggy_count += contract['targets']
-    #             if gpickle_name in runtime_gpickle_files:
-    #                 runtime_balance_dataset.append(contract)
-    #                 runtime_buggy_count += contract['targets']
-
-    #     if HAVE_CLEAN:
-    #         for contract in contract_labels:
-    #             if creation_buggy_count/len(creation_balance_dataset) <= 0.5:
-    #                 break
-    #             source_name = contract['contract_name'].split('-')[0] + '.sol'
-    #             gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
-    #             if source_name in clean_files and gpickle_name in creation_gpickle_files:
-    #                 creation_balance_dataset.append(contract)
-    #         for contract in contract_labels:
-    #             if runtime_buggy_count/len(runtime_balance_dataset) <= 0.5:
-    #                 break
-    #             source_name = contract['contract_name'].split('-')[0] + '.sol'
-    #             gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
-    #             if source_name in clean_files and gpickle_name in runtime_gpickle_files:
-    #                 runtime_balance_dataset.append(contract)
-    #     creation_balanced_output = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/creation_balanced_contract_labels.json'
-    #     with open(creation_balanced_output, 'w') as f:
-    #         json.dump(creation_balance_dataset, f, indent=4)
-    #     runtime_balanced_output = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/runtime_balanced_contract_labels.json'
-    #     with open(runtime_balanced_output, 'w') as f:
-    #         json.dump(runtime_balance_dataset, f, indent=4)
+            if HAVE_CLEAN:
+                for contract in contract_labels:
+                    if creation_buggy_count/len(creation_balance_dataset) <= 0.5:
+                        break
+                    source_name = contract['contract_name'].split('-')[0] + '.sol'
+                    gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
+                    if source_name in clean_files and gpickle_name in creation_gpickle_files:
+                        creation_balance_dataset.append(contract)
+                for contract in contract_labels:
+                    if runtime_buggy_count/len(runtime_balance_dataset) <= 0.5:
+                        break
+                    source_name = contract['contract_name'].split('-')[0] + '.sol'
+                    gpickle_name = contract['contract_name'].replace('.sol', '.gpickle')
+                    if source_name in clean_files and gpickle_name in runtime_gpickle_files:
+                        runtime_balance_dataset.append(contract)
+            creation_balanced_output = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/creation_balanced_contract_labels.json'
+            with open(creation_balanced_output, 'w') as f:
+                json.dump(creation_balance_dataset, f, indent=4)
+            runtime_balanced_output = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/runtime_balanced_contract_labels.json'
+            with open(runtime_balanced_output, 'w') as f:
+                json.dump(runtime_balance_dataset, f, indent=4)
     
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        sys.exit(0)
 
+    if option == '5':
+        print(f'{Fore.CYAN} [INFO] Merging .gpickles files into compressed_graphs.gpickle file...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2 {Style.RESET_ALL}')
+        # Merge gpickle files
+        for bug, count in bug_type.items():
+            creation_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0'
+            runtime_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0'
+            creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0/compressed_graphs'
+            runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0/compressed_graphs'
+            os.makedirs(creation_output, exist_ok=True)
+            os.makedirs(runtime_output, exist_ok=True)
+            # creation_gpickle_files = [f for f in os.listdir(creation_gpickle_path) if f.endswith('.gpickle')]
+            # runtime_gpickle_files = [f for f in os.listdir(runtime_gpickle_path) if f.endswith('.gpickle')]
 
-    # # Merge gpickle files
-    # for bug, count in bug_type.items():
-    #     creation_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0'
-    #     runtime_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0'
-    #     creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0/compressed_graphs'
-    #     runtime_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0/compressed_graphs'
-    #     os.makedirs(creation_output, exist_ok=True)
-    #     os.makedirs(runtime_output, exist_ok=True)
-    #     # creation_gpickle_files = [f for f in os.listdir(creation_gpickle_path) if f.endswith('.gpickle')]
-    #     # runtime_gpickle_files = [f for f in os.listdir(runtime_gpickle_path) if f.endswith('.gpickle')]
+            # Try to balance dataset
+            creation_balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/creation_balanced_contract_labels.json'
+            with open(creation_balanced_labels, 'r') as f:
+                creation_annotations = json.load(f)
+            creation_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in creation_annotations]
+            balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/balanced_contract_labels.json'
+            creation_balanced_compressed_graph = join(creation_output, 'creation_balanced_compressed_graphs.gpickle')
 
-    #     # Try to balance dataset
-    #     creation_balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/creation_balanced_contract_labels.json'
-    #     with open(creation_balanced_labels, 'r') as f:
-    #         creation_annotations = json.load(f)
-    #     creation_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in creation_annotations]
-    #     balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/balanced_contract_labels.json'
-    #     creation_balanced_compressed_graph = join(creation_output, 'creation_balanced_compressed_graphs.gpickle')
+            runtime_balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/runtime_balanced_contract_labels.json'
+            with open(runtime_balanced_labels, 'r') as f:
+                runtime_annotations = json.load(f)
+            runtime_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in runtime_annotations]
+            balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/balanced_contract_labels.json'
+            runtime_balanced_compressed_graph = join(runtime_output, 'runtime_balanced_compressed_graphs.gpickle')
 
-    #     runtime_balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/runtime_balanced_contract_labels.json'
-    #     with open(runtime_balanced_labels, 'r') as f:
-    #         runtime_annotations = json.load(f)
-    #     runtime_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in runtime_annotations]
-    #     balanced_labels = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}/balanced_contract_labels.json'
-    #     runtime_balanced_compressed_graph = join(runtime_output, 'runtime_balanced_compressed_graphs.gpickle')
+            merge_byte_code_cfg(creation_gpickle_path, creation_gpickle_files, creation_balanced_compressed_graph)
+            merge_byte_code_cfg(runtime_gpickle_path, runtime_gpickle_files, runtime_balanced_compressed_graph)
 
-    #     merge_byte_code_cfg(creation_gpickle_path, creation_gpickle_files, creation_balanced_compressed_graph)
-    #     merge_byte_code_cfg(runtime_gpickle_path, runtime_gpickle_files, runtime_balanced_compressed_graph)
-    #     copy(creation_balanced_compressed_graph, f'./experiments/ge-sc-data/byte_code/smartbugs/creation/compressed_graphs/{bug}_creation_balanced_cfg_compressed_graphs.gpickle')
-    #     copy(runtime_balanced_compressed_graph, f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/compressed_graphs/{bug}_runtime_balanced_cfg_compressed_graphs.gpickle')
-    
+            output_creation_balanced_compress_graph = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/compressed_graphs/{bug}_creation_balanced_cfg_compressed_graphs.gpickle'
+            output_runtime_balanced_compress_graph = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/compressed_graphs/{bug}_runtime_balanced_cfg_compressed_graphs.gpickle'
+
+            copy(creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
+            copy(runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+            
+            print(f'{Fore.GREEN} Creation compressed graph for {bug} has been created at {Fore.YELLOW}{output_creation_balanced_compress_graph}{Style.RESET_ALL}')
+            print(f'{Fore.GREEN} Runtime compressed graph for {bug} has been created at {Fore.YELLOW}{output_runtime_balanced_compress_graph}{Style.RESET_ALL}')
+
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        sys.exit(0)
+
     # # Convert .sol to .gpickle in annotation files
     # for bug, count in bug_type.items():
     #     annotation_path = f'./experiments/ge-sc-data/byte_code/smartbugs/contract_labels/{bug}'
