@@ -418,11 +418,17 @@ def print_info():
     # Function to wait for user input before proceeding
 
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
-
-    option = input(f"{Back.BLUE}Please input your option (1, 2a,2b ,4 ,5):{Style.RESET_ALL}")
-    if option not in ['1', '2a', '2b', '3','4','5']:
-        print(f"{Fore.RED}Invalid option. Please input 1, 2a ,2b ,3 ,4 or 5.{Style.RESET_ALL}")
+    option_list = ['1', '2a', '2b', '3','4','5']
+    option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
+    if option not in option_list:       
+        print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
         sys.exit(1)
+    verbose = input("Verbose? (Y/n) | Default Y: ")
+    if verbose.lower() == 'n':
+        print(f"{Fore.CYAN} [INFO] Logging disabled...{Style.RESET_ALL}")
+        logging.disable(logging.CRITICAL)
+    else:
+        logging.basicConfig(level=logging.INFO)
     return option
 
 
@@ -465,7 +471,7 @@ if __name__ == '__main__':
 
             print(f'{Fore.GREEN} Annotation file for {bug} has been created at {Fore.YELLOW}{output_label}{Style.RESET_ALL}')
         print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
-        print(f'{Fore.CYAN} You can now proceeds to option 2{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} You can now proceeds to option 2a{Style.RESET_ALL}')
         sys.exit(0)
 
 
@@ -522,6 +528,7 @@ if __name__ == '__main__':
     #         dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
     #     for dot in runtime_dot_files:
     #         dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
+    
     if option == '4':
         print(f'{Fore.CYAN} [INFO] Generating balanced dataset...{Style.RESET_ALL}')
         print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2 {Style.RESET_ALL}')
@@ -583,9 +590,10 @@ if __name__ == '__main__':
 
     if option == '5':
         print(f'{Fore.CYAN} [INFO] Merging .gpickles files into compressed_graphs.gpickle file...{Style.RESET_ALL}')
-        print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2 {Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2. {Style.RESET_ALL}')
         # Merge gpickle files
         for bug, count in bug_type.items():
+            print(f'{Fore.CYAN} [INFO] Processing {bug}... Might take some times... {Style.RESET_ALL}')
             creation_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0'
             runtime_gpickle_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{count}_buggy_curated_0'
             creation_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{count}_buggy_curated_0/compressed_graphs'

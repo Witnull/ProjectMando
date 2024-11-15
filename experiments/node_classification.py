@@ -17,6 +17,12 @@ from sco_models.model_hgt import HGTVulNodeClassifier
 from sco_models.utils import get_classification_report
 from sco_models.graph_utils import reveert_map_node_embedding, load_hetero_nx_graph
 
+import colorama
+from colorama import Fore, Style, Back
+# Initialize colorama for Windows compatibility
+colorama.just_fix_windows_console()
+import sys
+
 
 # Arguments
 parser = argparse.ArgumentParser('MANDO Experiments')
@@ -493,8 +499,50 @@ def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype,
     with open(join(logs, 'test_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
 
+def print_info():
+    '''
+    Print information about the script.
+    Color rule:
+    Success: Green
+    Warning: Yellow , or RED background
+    Error: Red
+    Info: Cyan
+    Action: Blue
+    '''
+    print("\n\n ###################### INFO ##################### \n\n")
+    print(f"Usage: python -m experiments.node_classification --epoch X --repeat Y")
+    print(f"###### BASELINES: \n")
+    print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
+    
+    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec . ERR {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [2] Run baselines base_gae . OK - fast{Style.RESET_ALL}") 
+    print(f"{Fore.CYAN} [3] Run baselines base_line . OK - fast{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [4] Run baselines base_node2vec . OK - fast{Style.RESET_ALL}\n")
+
+    print(f"###### MANDO-HGT: \n")
+    print(f"{Fore.CYAN} [5] Run MandoHGT nodetype (Default). OK - slow{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. ERR {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [7] Run MandoHGT gae. OK - slow{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [8] Run MandoHGT line. OK - slow{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [9] Run MandoHGT node2vec.  - slow{Style.RESET_ALL}")
+    print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
+    # Function to wait for user input before proceeding
+
+
+    print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
+    print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
+    
+    option_list = ['1', '2','3','4','5','6','7','8','9']
+    option = '4'
+    option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
+    if option not in option_list:       
+        print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
+        sys.exit(1)
+    return option
 
 def main(device):
+    option = print_info()
+
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
@@ -532,17 +580,29 @@ def main(device):
             line_embedded = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_line_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_buggy_curated.pkl'
             node2vec_embedded = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_buggy_curated.pkl'
             # Base line
-            # base_metapath2vec(compressed_graph, source_path, bugtype, device)
-            # base_gae(nx_graph, gae_embedded, bugtype, device)
-            # base_line(nx_graph, line_embedded, bugtype, device)
-            # base_node2vec(nx_graph, gae_embedded, bugtype, device)
+            if (option == '1'):
+                base_metapath2vec(compressed_graph, source_path, bugtype, device)
+            elif (option == '2'):
+                base_gae(nx_graph, gae_embedded, bugtype, device)
+            elif (option == '3'):
+                base_line(nx_graph, line_embedded, bugtype, device)
+            elif (option == '4'):
+                base_node2vec(nx_graph, gae_embedded, bugtype, device)
 
             # Our models
-            nodetype(compressed_graph, source_path, dataset, bugtype, device)
-            # metapath2vec(compressed_graph, source_path, dataset, bugtype, device)
-            # gae(compressed_graph, source_path, dataset, gae_embedded, bugtype, device)
-            # line(compressed_graph, source_path,  dataset, line_embedded, bugtype, device)
-            # node2vec(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
+            elif (option == '5'):
+                nodetype(compressed_graph, source_path, dataset, bugtype, device)
+            elif (option == '6'):
+                metapath2vec(compressed_graph, source_path, dataset, bugtype, device)
+            elif (option == '7'):
+                gae(compressed_graph, source_path, dataset, gae_embedded, bugtype, device)
+            elif (option == '8'):
+                line(compressed_graph, source_path,  dataset, line_embedded, bugtype, device)
+            elif (option == '9'):
+                node2vec(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
+            else:
+                print("Invalid option!")
+                sys.exit(1)
 
 
 def get_avg_results(report_path, top_rate=0.5):

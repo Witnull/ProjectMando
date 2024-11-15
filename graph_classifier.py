@@ -245,6 +245,7 @@ if __name__ == '__main__':
                 rmtree(args['log_dir'])
             # visualize_average_k_folds(args, train_results, val_results)
             visualize_k_folds(args, train_results, val_results)
+            print(f'Visualize can be viewed using: tensorboard --logdir LOG_DIR ')
     # Testing
     else:
         print('Testing phase')
