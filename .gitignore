@@ -30,3 +30,5 @@ experiments/ge-sc-data/byte_code/smartbugs/cryptic_evm/*
 Mando/*
 experiments/ge-sc-data/smartbugs-wild-clean-contracts/*
 visulalizes/*
+ge-sc-dataset/*
+ge-sc-dataset-eb9b8eb36decd03ecde5f7afe1c49dcec0932c09.zip

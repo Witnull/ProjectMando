@@ -75,3 +75,5 @@ RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
 
 # Default command
 CMD ["/bin/bash"]
+
+# EXPOSE 6006

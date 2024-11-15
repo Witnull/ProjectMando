@@ -15,6 +15,7 @@ import sys
 # Add the parent directory of 'sco_models' to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import torch_geometric
 
 from sco_models.utils import load_meta_paths
 from sco_models.graph_utils import add_hetero_ids, \
@@ -201,7 +202,6 @@ class HeteroRGCN(nn.Module):
         # get appropriate logits
         return h_dict[out_key]
 
-
 class HGTVulNodeClassifier(nn.Module):
     def __init__(self, compressed_global_graph_path, feature_extractor=None, node_feature='han', hidden_size=128, num_layers=2,num_heads=8, use_norm=True, device='cpu'):
         super(HGTVulNodeClassifier, self).__init__()
@@ -259,11 +259,21 @@ class HGTVulNodeClassifier(nn.Module):
         elif node_feature == 'metapath2vec':
             embedding_dim = 128
             self.in_size = embedding_dim
+
             for metapath in self.meta_paths:
-                _metapath_embedding = MetaPath2Vec(self.symmetrical_global_graph_data, embedding_dim=embedding_dim,
-                        metapath=metapath, walk_length=50, context_size=7,
-                        walks_per_node=5, num_negative_samples=5, num_nodes_dict=self.number_of_nodes,
-                        sparse=False)
+                
+                _metapath_embedding = MetaPath2Vec(
+                                  self.symmetrical_global_graph_data, 
+                                  embedding_dim=embedding_dim,
+                                  metapath=metapath, 
+                                  walk_length=50, 
+                                  context_size=7,
+                                  walks_per_node=5, 
+                                  num_negative_samples=5, 
+                                  num_nodes_dict=self.number_of_nodes,
+                                  sparse=False)
+
+              
                 ntype = metapath[0][0]
                 if ntype not in features.keys():
                     features[ntype] = _metapath_embedding(ntype).unsqueeze(0)

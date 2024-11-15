@@ -513,8 +513,8 @@ def print_info():
     print(f"Usage: python -m experiments.node_classification --epoch X --repeat Y")
     print(f"###### BASELINES: \n")
     print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
-    
-    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec . ERR {Style.RESET_ALL}")
+
+    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec . ERR - metapath2vec {Style.RESET_ALL}")
     print(f"{Fore.CYAN} [2] Run baselines base_gae . OK - fast{Style.RESET_ALL}") 
     print(f"{Fore.CYAN} [3] Run baselines base_line . OK - fast{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [4] Run baselines base_node2vec . OK - fast{Style.RESET_ALL}\n")
