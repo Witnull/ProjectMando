@@ -1,12 +1,13 @@
 from curses import BUTTON1_TRIPLE_CLICKED
 import os
 from os.path import join
-
+import pygraphviz as pgv
 import json
 import torch
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 # import pygraphviz as pgv
 from matplotlib.collections import PolyCollection
 from matplotlib import cm
@@ -27,14 +28,14 @@ def polygon_under_graph(x, y):
     return [(x[0], 0.), *zip(x, y), (x[-1], 0.)]
 
 
-def plot_graph(nxg):
+def plot_graph(nxg,gname):
     model = HGTVulGraphClassifier(nxg, node_feature='nodetype', hidden_size=128, num_layers=2,num_heads=8, use_norm=True, device='cpu')
     graph = model.symmetrical_global_graph
     ag = pgv.AGraph(strict=True, directed=False)
     for u, v, k in graph.canonical_etypes:
         ag.add_edge(u, v, label=k)
     ag.layout('dot')
-    ag.draw('graph.png')
+    ag.draw(f'visulalizes/graph_{gname}.png')
 
 
 
@@ -46,8 +47,8 @@ if __name__ == '__main__':
               'unchecked_low_level_calls': 95}
     # bug_type = {'access_control': 57}
 
-    # nxg = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_cg_compressed_graphs.gpickle'
-    # plot_graph(nxg)
+    nxg = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_cg_compressed_graphs.gpickle'
+    plot_graph(nxg, "test1")
 
     # creation_path = '/home/minhnn/minhnn/ICSE/EtherSolve_ICPC2021_ReplicationPackage/data/reentrancy/creation/'
     # output = '/home/minhnn/minhnn/ICSE/ge-sc/forensics'
@@ -266,7 +267,11 @@ if __name__ == '__main__':
     #           loc='lower left', fontsize=8)
     # plt.show()
 
+
+
+
     # Graph statistics
+    tmp = []
     for bug, count in bug_type.items():
         compressed_graph = f'./experiments/ge-sc-data/source_code/{bug}/buggy_curated/cfg_cg_compressed_graphs.gpickle'
         print(bug, ' : ', count)
@@ -279,3 +284,15 @@ if __name__ == '__main__':
                 continue
             bug_node += 1
         print('bug node: ', bug_node)
+        # save to csv file
+        # Append statistics to data list
+        tmp.append({
+            'bug_type': bug,
+            'total_count': count,
+            'num_nodes': len(nx_graph.nodes()),
+            'num_edges': len(nx_graph.edges()),
+            'bug_nodes': bug_node
+        })
+# Create DataFrame and save to CSV
+df = pd.DataFrame(tmp)
+df.to_csv('./visulalizes/GraphStatistic/graph_statistics.csv', index=False)

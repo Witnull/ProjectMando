@@ -7,6 +7,28 @@
 
 Service: `mando-hgt-rebuild`
 
+## Dir tree
+```
+.
+|
++---- assets
+|
++---- data
+|
++---- forensics
+|
++---- Mando (Contains the required dependencies from the repo below)
+|
++---- models
+|
++---- process_graphs
+|
++---- sco_models
+|
++---- utils
+|
+
+```
 ## Required dependencies
 
 Repository:
@@ -33,7 +55,7 @@ More information refer to the Docker documentation:
 
 ## Running
 
-#### Note: X - May not need to run
+#### Note: X - May not need to run / ignore
 
 ### Processing data to graphs
 
@@ -44,6 +66,9 @@ More information refer to the Docker documentation:
     - This is for the baseline models
 
 ---
+### Running the baselines models
+
+
 
 6. process_graphs/dgl_graph_generator.py X
 7. process_graphs/solidifi_reader.py X
