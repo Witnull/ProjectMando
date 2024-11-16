@@ -252,6 +252,7 @@ class HGTVulNodeClassifier(nn.Module):
         # Create input node features
         self.node_feature = node_feature
         features = {}
+
         if node_feature == 'nodetype':
             for ntype in self.symmetrical_global_graph.ntypes:
                 features[ntype] = self._nodetype2onehot(ntype).repeat(self.symmetrical_global_graph.num_nodes(ntype), 1).to(self.device)
@@ -259,7 +260,6 @@ class HGTVulNodeClassifier(nn.Module):
         elif node_feature == 'metapath2vec':
             embedding_dim = 128
             self.in_size = embedding_dim
-
             for metapath in self.meta_paths:
                 
                 _metapath_embedding = MetaPath2Vec(
@@ -272,8 +272,9 @@ class HGTVulNodeClassifier(nn.Module):
                                   num_negative_samples=5, 
                                   num_nodes_dict=self.number_of_nodes,
                                   sparse=False)
-
-              
+                
+                #print(f"MTP E:  {_metapath_embedding}")
+            
                 ntype = metapath[0][0]
                 if ntype not in features.keys():
                     features[ntype] = _metapath_embedding(ntype).unsqueeze(0)
@@ -281,6 +282,7 @@ class HGTVulNodeClassifier(nn.Module):
                     features[ntype] = torch.cat((features[ntype], _metapath_embedding(ntype).unsqueeze(0)))
             # Use mean for aggregate node features
             features = {k: torch.mean(v, dim=0).to(self.device) for k, v in features.items()}
+            #print(f"MTP F: {features}")
 
         elif node_feature == 'han':
             assert feature_extractor is not None, "Please pass features extraction model"
@@ -305,9 +307,12 @@ class HGTVulNodeClassifier(nn.Module):
                 embedding = pickle.load(f, encoding="utf8")
             embedding = torch.tensor(embedding, device=device)
             features = map_node_embedding(nx_graph, embedding)
-
+        
+        #print(f"FEATURES STEP SYMM: {features}")
+       # print(f"NTypes:{self.symmetrical_global_graph.ntypes}")
         self.symmetrical_global_graph = self.symmetrical_global_graph.to(self.device)
-        # self.symmetrical_global_graph.ndata['feat'] = features
+
+        self.symmetrical_global_graph.ndata['feat'] = features
         for ntype in self.symmetrical_global_graph.ntypes:
             emb = nn.Parameter(features[ntype], requires_grad = False)
             self.symmetrical_global_graph.nodes[ntype].data['inp'] = emb.to(device)
@@ -447,11 +452,14 @@ class HGTVulGraphClassifier(nn.Module):
                         dtype=torch.long, device=device) * self.etypes_dict[etype]
 
         # Create input node features
+        print(f"NODE FEATURE {node_feature}\n\n")
         features = {}
         if node_feature == 'nodetype':
+
             for ntype in self.symmetrical_global_graph.ntypes:
                 features[ntype] = self._nodetype2onehot(ntype).repeat(self.symmetrical_global_graph.num_nodes(ntype), 1).to(self.device)
             self.in_size = len(self.node_types)
+        
         elif node_feature == 'metapath2vec':
             embedding_dim = 128
             self.in_size = embedding_dim
@@ -492,6 +500,9 @@ class HGTVulGraphClassifier(nn.Module):
 
         self.symmetrical_global_graph = self.symmetrical_global_graph.to(self.device)
         self.symmetrical_global_graph.ndata['feat'] = features
+
+
+
         for ntype in self.symmetrical_global_graph.ntypes:
             emb = nn.Parameter(features[ntype], requires_grad = False)
             self.symmetrical_global_graph.nodes[ntype].data['inp'] = emb.to(device)
@@ -543,18 +554,34 @@ class HGTVulGraphClassifier(nn.Module):
         for ntype in self.symmetrical_global_graph.ntypes:
             n_id = self.ntypes_dict[ntype]
             h[ntype] = F.gelu(self.adapt_ws[n_id](self.symmetrical_global_graph.nodes[ntype].data['inp']))
+
         for i in range(self.num_layers):
             h = self.gcs[i](self.symmetrical_global_graph, h)
+
         for ntype, feature in h.items():
             assert len(self.node_ids_dict[ntype]) == feature.shape[0]
             hiddens[self.node_ids_dict[ntype]] = feature
+
+       #print(f"NODE LIST {self.node_ids_by_filename.keys()}\n\n")
+
         batched_graph_embedded = []
         for g_name in batched_g_name:
-            node_list = self.node_ids_by_filename[g_name]
+            node_list = self.node_ids_by_filename
+            g_name = g_name.replace('.sol', '.gpickle')
+            if not g_name in node_list:
+                #print(f"Graph {g_name} not found in node list")
+                continue
+            node_list = node_list[g_name]
             batched_graph_embedded.append(hiddens[node_list].mean(0).tolist())
+
+        #print(f"LEN BATCHED GRAPH EMBEDDED: {len(batched_graph_embedded)}")
+
         batched_graph_embedded = torch.tensor(batched_graph_embedded).to(self.device)
         if save_featrues:
             torch.save(batched_graph_embedded, save_featrues)
+
+        #print(f"BATCHED GRAPH EMBEDDED: {batched_graph_embedded}")
+
         output = self.classify(batched_graph_embedded)
         return output, batched_graph_embedded
 

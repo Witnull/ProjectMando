@@ -47,10 +47,15 @@ Repository:
 ## Build docker
 
 To using docker
-`docker compose up`
+
+`docker compose up` ( --build : to rebuild the docker with latest changes)
+
 `docker exec -ti <container name/id> /bin/bash`
+
 Or
+
 `docker build -t <image name/id> .`
+
 `docker run -itv .:/app/mando-hgt <image name/id>`
 
 More information refer to the Docker documentation:

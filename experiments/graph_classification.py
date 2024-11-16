@@ -95,6 +95,7 @@ def train(model, train_loader, labels, device):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0002)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.005, total_steps=total_steps)
     for _ in range(total_steps):
+        #print(f'Training epoch: {_+1}/{total_steps}')
         optimizer.zero_grad()
         logits, _ = model(train_loader)
         logits = logits.to(device)
@@ -143,17 +144,31 @@ def base_metapath2vec(compressed_graph, file_name_dict, dataset, bugtype, device
     X_train, X_val, y_train, y_val = dataset
     X_embedded_train = []
     X_embedded_val = []
+    
+    # print(file_name_dict.keys()) # .gpickle
+    # print("\n\n")
+    # print(X_train) # .sol
+    # print("\n\n")
     for file in X_train:
+        file = file.replace('.sol', '.gpickle')
+        if file not in file_name_dict:
+            #print(f'Warning: {file} not found in file_name_dict')
+            continue
         X_embedded_train.append(torch.mean(embedding[file_name_dict[file]], 0).tolist())
     for file in X_val:
+        file = file.replace('.sol', '.gpickle')
+        if file not in file_name_dict:
+            #print(f'Warning: {file} not found in file_name_dict')
+            continue
         X_embedded_val.append(torch.mean(embedding[file_name_dict[file]], 0).tolist())
+
     X_embedded_train = torch.tensor(X_embedded_train, device=device)
     X_embedded_val = torch.tensor(X_embedded_val, device=device)
     print('Training phase')
     classifier = torch.nn.Linear(128, 2)
     classifier.to(device)
     classifier.train()
-    targets = torch.tensor(y_train, device=device)
+    targets = y_train.clone().detach() #torch.tensor(y_train, device=device)  # FIX WITH SUGGEST
     loss_fcn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(classifier.parameters(), lr=0.0005)
     for _ in range(EPOCHS):
@@ -339,12 +354,18 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device):
         os.makedirs(output_models)
     feature_extractor = feature_extractor
     node_feature = 'nodetype'
+
     model = GraphClassifier(compressed_graph, feature_extractor=feature_extractor, 
                                  node_feature=node_feature, device=device)
+    
     model.reset_parameters()
     model.to(device)
     X_train, X_val, y_train, y_val = dataset
+
+    #print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
+
     model = train(model, X_train, y_train, device)
+
     save_path = os.path.join(output_models, f'hgt.pth')
     torch.save(model.state_dict(), save_path)
     model.eval()
@@ -618,15 +639,15 @@ def print_info():
     print(f"Usage: python -m experiments.graph_classification --epoch X --repeat Y")
     print(f"###### BASELINES: \n")
     print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
-    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec. ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [2] Run baselines base_line. ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [3] Run baselines base_node2vec. ERR{Style.RESET_ALL}\n")
+    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec. OK{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [2] Run baselines base_line. ERR -- mising files{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [3] Run baselines base_node2vec. ERR -- mising files {Style.RESET_ALL}\n")
     print(f"###### MANDO-HGT: \n")
-    print(f"{Fore.CYAN} [4] Run MandoHGT nodetype (Default). ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [5] Run MandoHGT metapath2vec. ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [6] Run MandoHGT gae. ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [7] Run MandoHGT line. ERR{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [8] Run MandoHGT node2vec. ERR{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [4] Run MandoHGT nodetype (Default). OK{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [5] Run MandoHGT metapath2vec. OK{Style.RESET_ALL}")
+   # print(f"{Fore.CYAN} [6] Run MandoHGT gae. ERR -- mising files{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [7] Run MandoHGT line. ERR -- mising files{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [8] Run MandoHGT node2vec. ERR -- mising files{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
@@ -634,7 +655,7 @@ def print_info():
     print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
     print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
-    option_list = ['1', '2','3','4','5','6','7','8']
+    option_list = ['1', '2','3','4','5','6','7','8','a']
     option = '4'
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
@@ -648,7 +669,7 @@ def main(device):
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
-            print(f'Train bugtype {bugtype} {i}-th')
+            print(f'Train bugtype {bugtype} {i+1}-th/{REPEAT} reppeat ')
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
             nx_graph = nx.read_gpickle(compressed_graph)
             file_name_dict = get_node_id_by_file_name(nx_graph)
@@ -691,7 +712,8 @@ def main(device):
             elif(option == '5'):
                 metapath2vec(compressed_graph, dataset, None, bugtype, device)
             elif(option == '6'):
-                gae(compressed_graph, dataset, line_embedded, bugtype, device)
+                print(f"{Fore.RED}Not USING.{Style.RESET_ALL}")
+              #  gae(compressed_graph, dataset, line_embedded, bugtype, device)
             elif(option == '7'):
                 line(compressed_graph, dataset, line_embedded, bugtype, device)
             elif(option == '8'):
@@ -699,6 +721,8 @@ def main(device):
             else:   
                 print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
                 sys.exit(1)
+                
+            
             # lstm(compressed_graph, dataset, bugtype, device)
             # random(compressed_graph, dataset, 2, bugtype, device)
             # random(compressed_graph, dataset, 8, bugtype, device)
@@ -747,7 +771,13 @@ def get_results():
                 buggy_f1, macro_f1 = '-', '-'
             else:
                 report_path = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/test_report.json'
-                buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+                if not os.path.exists(report_path):
+                    print(f'REPORT {report_path} not found!')
+                    continue
+                try:
+                    buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+                except:
+                    buggy_f1, macro_f1 = 0.0, 0.0
             # buggy_f1, macro_f1 = get_max_results(report_path)
             if model not in buggy_f1_report:
                 buggy_f1_report[model] = [buggy_f1]
@@ -759,21 +789,28 @@ def get_results():
     for model in models:
         buggy_f1_row = []
         macro_f1_row = []
+        if model not in buggy_f1_report:
+            continue
         for i in range(len(buggy_f1_report[model])):
+
             buggy_f1 = buggy_f1_report[model][i]
             macro_f1 = macro_f1_report[model][i]
             buggy_f1_row.append('%.2f'%buggy_f1 + '%' if isinstance(buggy_f1, float) else buggy_f1)
             macro_f1_row.append('%.2f'%macro_f1 + '%' if isinstance(macro_f1, float) else macro_f1)
+
         data.append([model, 'Buggy-F1'] + buggy_f1_row)
         data.append([model, 'Macro-F1'] + macro_f1_row)
-        print(' ', end=' ')
-        print(' \t'.join(buggy_f1_row), end=r'')
-        print()
-        print(' ', end=' ')
-        print(' \t'.join(macro_f1_row), end=r'')
-        print()
-    print()
+        
+    #     print(' ', end=' ')
+    #     print(' \t'.join(buggy_f1_row), end=r'')
+    #     print()
+    #     print(' ', end=' ')
+    #     print(' \t'.join(macro_f1_row), end=r'')
+    #     print()
+    # print()
+    print(f"{Fore.GREEN}")
     print(tabulate(data, headers=bug_list, tablefmt='orgtbl'))
+    print(f"{Style.RESET_ALL}")
 
 
 def get_exp_time(report_path):
@@ -792,6 +829,9 @@ def get_runtime_result():
     for bugtype in bug_list:
         for model in models:
             report_path = f'{ROOT}/logs/{TASK}/source_code/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/test_report.json'
+            if not os.path.exists(report_path):
+                print(f'runtime REPORT {report_path} not found!')
+                continue
             train_time, test_time = get_exp_time(report_path)
             # train_time, test_time = get_max_results(report_path)
             if model not in train_time_report:
@@ -805,9 +845,15 @@ def get_runtime_result():
     for i in range(len(bug_list)):
         bug_train_list = []
         bug_test_list = []
-        for model in models[-5:]:
+        for model in models:
+            if model not in train_time_report:
+                continue
             bug_train_list.append(train_time_report[model][i])
+
+            if model not in test_time_report:
+                continue
             bug_test_list.append(test_time_report[model][i])
+
         avg_train_time.append(mean(bug_train_list))
         avg_test_time.append(mean(bug_test_list))
     print(avg_train_time)
@@ -820,6 +866,6 @@ if __name__ == '__main__':
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     mps_device = 'mps'
     if args['result']:
-            get_runtime_result()
+            get_results()
     else:
         main(device)

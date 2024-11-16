@@ -54,25 +54,27 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Cython, wheel, and setuptools
-RUN python3.10 -m pip install --no-cache-dir "Cython==0.29.21" wheel setuptools
+RUN pip install --no-cache-dir "Cython==0.29.21" wheel setuptools
 
 # Install PyYAML separately
-RUN python3.10 -m pip install --no-cache-dir "pyyaml==5.4.1" --no-build-isolation
+RUN pip install --no-cache-dir "pyyaml==5.4.1" --no-build-isolation
 
 # Install NumPy separately
-RUN python3.10 -m pip install --no-cache-dir "numpy==1.26.4"
+RUN pip install --no-cache-dir "numpy==1.26.4"
 
 #Install Graphviz
 RUN apt-get update && apt-get install -y graphviz libgraphviz-dev
 
 #Install DGL, torch and its friends. :)))
-RUN pip install  dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
+RUN pip install dgl -f https://data.dgl.ai/wheels/torch-2.2/cu121/repo.html
 
 #Install Java
-RUN apt update && apt install default-jre
+RUN apt-get update && apt install -y default-jre
 
 RUN python3.10 -m pip install --no-cache-dir -r requirements.txt
 
+# set DGL environment variables
+RUN export DGLBACKEND=pytorch
 # Default command
 CMD ["/bin/bash"]
 

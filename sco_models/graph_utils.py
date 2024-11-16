@@ -130,12 +130,18 @@ def generate_lstm_node_features(nx_graph):
 def reveert_map_node_embedding(nx_graph, features):
     nx_g = nx_graph
     embedded = torch.zeros(len(nx_g.nodes), 128)
+    #print(f"EMBEDDING: {embedded}\n\n")
+    #print(f"nx_g.nodes{nx_g.nodes}\n\n")
+   # print(f"Features: {features}\n\n")
     feature_count = {}
+
     for node_ids, node_data in nx_g.nodes(data=True):
         node_type = node_data['node_type']
         if node_type not in feature_count:
             feature_count[node_type] = 0
+        
         embedded[node_ids] = features[node_type][feature_count[node_type]]
+
         feature_count[node_type] += 1
     return embedded
 

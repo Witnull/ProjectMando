@@ -104,10 +104,21 @@ def base_metapath2vec(compressed_graph, source_path, bugtype, device):
     if not os.path.exists(logs):
         os.makedirs(logs)
     model = HGTVulNodeClassifier(compressed_graph, feature_extractor=None, node_feature='metapath2vec', device=device)
+
+    # Check graph structure
+    # print(f"Graph nodes: {model.symmetrical_global_graph.number_of_nodes()}")
+    # print(f"Graph edges: {model.symmetrical_global_graph.number_of_edges()}")
+    # print(f"Node types: {model.symmetrical_global_graph.ntypes}")
+    # print(f"Edge types: {model.symmetrical_global_graph.etypes}")
+    # print(f"Available node features: {model.symmetrical_global_graph.ndata.keys()}")
+
     features = model.symmetrical_global_graph.ndata['feat']
+
+    # print(f'Features:{features}\n\n')
+
     nx_graph = load_hetero_nx_graph(compressed_graph)
     embedding = reveert_map_node_embedding(nx_graph, features)
-    embedding = torch.tensor(embedding, device=device)
+    embedding = torch.tensor(embedding, device=device) 
     assert len(nx_graph.nodes) == embedding.shape[0]
     number_of_nodes = embedding.shape[0]
     train, test = train_test_split(range(number_of_nodes), test_size=VAL_RATE)
@@ -514,7 +525,7 @@ def print_info():
     print(f"###### BASELINES: \n")
     print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
 
-    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec . ERR - metapath2vec {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec . OK - metapath2vec {Style.RESET_ALL}")
     print(f"{Fore.CYAN} [2] Run baselines base_gae . OK - fast{Style.RESET_ALL}") 
     print(f"{Fore.CYAN} [3] Run baselines base_line . OK - fast{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [4] Run baselines base_node2vec . OK - fast{Style.RESET_ALL}\n")
@@ -546,7 +557,7 @@ def main(device):
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
-            print(f'Train bugtype {bugtype} {i}-th')
+            print(f'Train bugtype {bugtype} {i}-th/{REPEAT} reppeat ')
             compressed_graph = f'{ROOT}/ge-sc-data/source_code/{bugtype}/buggy_curated/{COMPRESSED_GRAPH}_compressed_graphs.gpickle'
             nx_graph = nx.read_gpickle(compressed_graph)
             number_of_nodes = len(nx_graph)
@@ -633,7 +644,14 @@ def get_results():
     for bugtype in bug_list:
         for model in models:
             report_path = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/buggy_curated/test_report.json'
-            buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+            
+            if not os.path.exists(report_path):
+                print(f'REPORT {report_path} not found!')
+                continue
+            try:
+                buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+            except:
+                buggy_f1, macro_f1 = 0.0, 0.0
             # buggy_f1, macro_f1 = get_max_results(report_path)
             if model not in buggy_f1_report:
                 buggy_f1_report[model] = [buggy_f1]
@@ -651,6 +669,8 @@ def get_results():
         # print()
         buggy_f1_row = []
         macro_f1_row = []
+        if model not in buggy_f1_report:
+            continue
         for i in range(len(buggy_f1_report[model])):
             buggy_f1 = buggy_f1_report[model][i]
             macro_f1 = macro_f1_report[model][i]
@@ -658,7 +678,9 @@ def get_results():
             macro_f1_row.append('%.2f'%macro_f1 + '%' if isinstance(macro_f1, float) else macro_f1)
         data.append([model, 'Buggy-F1'] + buggy_f1_row)
         data.append([model, 'Macro-F1'] + macro_f1_row)
+    print(f"{Fore.GREEN}")
     print(tabulate(data, headers=bug_list, tablefmt='orgtbl'))
+    print(f"{Style.RESET_ALL}")
 
 
 def get_exp_time(report_path):
