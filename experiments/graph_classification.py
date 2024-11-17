@@ -41,6 +41,7 @@ parser.add_argument('-b', '--bytecode', type=str, default='runtime',
                     help='Kind of bytecode')
                     
 parser.add_argument('-r', '--result', action='store_true')
+parser.add_argument('-rt', '--runtime', action='store_true')
 args = parser.parse_args().__dict__
 
 if args['model'] == 'han':

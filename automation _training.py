@@ -1,7 +1,8 @@
 #Made by @witnull
 # TODO:
 '''
-
+DONT RUN THIS CODE YET 
+NOTHING IS COMFIRMED
 '''
 
 import os
