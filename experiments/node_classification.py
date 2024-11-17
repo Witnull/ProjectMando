@@ -522,6 +522,7 @@ def print_info():
     '''
     print("\n\n ###################### INFO ##################### \n\n")
     print(f"Usage: python -m experiments.node_classification --epoch X --repeat Y")
+    print(f"{Back.CYAN}{Fore.BLUE}  This script is node classification. PHASE 2 Fine-grained detection. Table III in paper \n{Style.RESET_ALL}")
     print(f"###### BASELINES: \n")
     print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
 
@@ -533,15 +534,13 @@ def print_info():
     print(f"###### MANDO-HGT: \n")
     print(f"{Fore.CYAN} [5] Run MandoHGT nodetype (Default). OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. ERR {Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [7] Run MandoHGT gae. OK - slow{Style.RESET_ALL}")
+   # print(f"{Fore.CYAN} [7] Run MandoHGT gae. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [8] Run MandoHGT line. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [9] Run MandoHGT node2vec.  - slow{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
-
-    print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
-    print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
+    #print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
     option_list = ['1', '2','3','4','5','6','7','8','9']
     option = '4'

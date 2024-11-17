@@ -637,6 +637,7 @@ def print_info():
     '''
     print("\n\n ###################### INFO ##################### \n\n")
     print(f"Usage: python -m experiments.graph_classification --epoch X --repeat Y")
+    print(f"{Back.CYAN}{Fore.BLUE}  This script is graph classification. PHASE 1 Coarse-grained detection. Table II in paper \n{Style.RESET_ALL}")
     print(f"###### BASELINES: \n")
     print(f"{Fore.YELLOW} Remember to run process_graphs/byte_code_control_flow_graph_generator.py first .... ")
     print(f"{Fore.CYAN} [1] Run baselines base_metapath2vec. OK{Style.RESET_ALL}")
@@ -652,8 +653,8 @@ def print_info():
     # Function to wait for user input before proceeding
 
 
-    print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
-    print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
+    #print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
+    #print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
     option_list = ['1', '2','3','4','5','6','7','8','a']
     option = '4'
@@ -866,6 +867,10 @@ if __name__ == '__main__':
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     mps_device = 'mps'
     if args['result']:
+            print(f"{Fore.GREEN}Get results ...{Style.RESET_ALL}\n")
             get_results()
+    elif args['runtime']:
+        print(f"{Fore.GREEN}Get runtime result...{Style.RESET_ALL}\n")
+        get_runtime_result()
     else:
         main(device)
