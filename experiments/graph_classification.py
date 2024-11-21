@@ -45,8 +45,10 @@ parser.add_argument('-rt', '--runtime', action='store_true')
 args = parser.parse_args().__dict__
 
 if args['model'] == 'han':
+    print('Using HAN model')
     from sco_models.model_hetero import MANDOGraphClassifier as GraphClassifier
 elif args['model'] == 'hgt':
+    print('Using HGT model')
     from sco_models.model_hgt import HGTVulGraphClassifier as GraphClassifier
 
 torch.manual_seed(args['seed'])

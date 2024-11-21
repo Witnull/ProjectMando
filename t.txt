@@ -1,0 +1,8 @@
+Data:  {
+    ('ENTRY_POINT', 'next', 'EXPRESSION'): (tensor([ ]), tensor([  ]), tensor([ ])),
+    ('ENTRY_POINT', 'next', 'FALLBACK_FUNCTION'): (tensor([ ]), tensor([ ])), 
+    ('EXPRESSION', 'next', 'EXPRESSION'): (tensor([   ]), tensor([   ])), 
+    ('ENTRY_POINT', 'next', 'RETURN'): (tensor([ ]), tensor([  ])), 
+            }
+Meta path:  [('BEGIN_LOOP', 'if_true', 'IF_LOOP'), ('IF_LOOP', 'if_true', 'BEGIN_LOOP')]
+Num nodes:  {'ENTRY_POINT': 2762, 'EXPRESSION': 5389, 'CONTRACT_FUNCTION': 2231, 'FALLBACK_FUNCTION': 24, 'RETURN': 543, 'NEW VARIABLE': 351, '_': 99, 'IF': 219, 'END_IF': 212, 'FUNCTION_NAME': 935, 'OTHER_ENTRYPOINT': 109, 'BEGIN_LOOP': 39, 'END_LOOP': 39, 'IF_LOOP': 39, 'INLINE ASM': 14, 'CONTINUE': 1, 'THROW': 8}

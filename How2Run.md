@@ -1,8 +1,9 @@
-# MANDO REBUILD
+# MANDO-HGT REBUILD
 
 [![python](https://img.shields.io/badge/python-3.10.12-blue)](https://www.python.org/)
 [![Static Badge](https://img.shields.io/badge/Ubuntu-22.04-orange)](https://releases.ubuntu.com/jammy/)
 [![Static Badge](https://img.shields.io/badge/Docker-latest-teal)](https://docker.com/)
+[![Static Badge](https://img.shields.io/badge/CUDA-12.1-green)]
 
 Service: `mando-hgt-rebuild`
 

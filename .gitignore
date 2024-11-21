@@ -11,8 +11,6 @@ package-lock.json
 outputs/*
 logs/
 logs*/
-*.ipynb
-*.txt
 **/logs/
 **/logs*/
 **/dataset/

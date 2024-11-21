@@ -1,4 +1,5 @@
 # MANDO-HGT: Heterogeneous Graph Transformers for Smart Contract Vulnerability Detection
+
 [![python](https://img.shields.io/badge/python-3.7.12-blue)](https://www.python.org/)
 [![slither](https://img.shields.io/badge/slither-0.8.0-orange)](https://github.com/crytic/slither)
 [![dgl](https://img.shields.io/badge/dgl-0.6.1-green)](https://www.dgl.ai/)
@@ -7,8 +8,8 @@
 <img src="./assets/MANDO_HGT.png" alt="MANDO HGT Logo" width="225" height="225" class="center">
 </p>
 
-
 # Overview
+
 This repository is the implementation of MANDO-HGT which should be applicable to either source code or bytecode/binary form of software programs to cater to different situations where the source code of the software may or may not be available.
 
 <p align="center">
@@ -24,7 +25,8 @@ This repository is the implementation of MANDO-HGT which should be applicable to
 </p>
 
 ## Citation
-Nguyen, H. H., Nguyen, N.M., Xie, C., Ahmadi, Z., Kudenko, D., Doan, T. N., & Jiang, L. (2023, May). *MANDO-HGT: Heterogeneous Graph Transformers for Smart Contract Vulnerability Detection*. In Proceedings of 20th International Conference on Mining Software Repositories (MSR' 23), Melbourne, Australia, 2023. [Preprint](https://hoanghnguyen.com/assets/pdf/nguyen2023msr.pdf)
+
+Nguyen, H. H., Nguyen, N.M., Xie, C., Ahmadi, Z., Kudenko, D., Doan, T. N., & Jiang, L. (2023, May). _MANDO-HGT: Heterogeneous Graph Transformers for Smart Contract Vulnerability Detection_. In Proceedings of 20th International Conference on Mining Software Repositories (MSR' 23), Melbourne, Australia, 2023. [Preprint](https://hoanghnguyen.com/assets/pdf/nguyen2023msr.pdf)
 
 ```
 @inproceedings{nguyen2023msr,
@@ -64,20 +66,25 @@ Nguyen, H. H., Nguyen, N.M., Xie, C., Ahmadi, Z., Kudenko, D., Doan, T. N., & Ji
   - [Visuallization](#visuallization)
 
 # How to train the models?
-# How to run in newer version on Docker?
+
+### How to run in newer version on Docker?
+
 - Refer here [How 2 run](How2Run.md)
 
 ## Dataset
 
 ### Source code
+
 - We prepared dataset for [experiments](experiments/ge-sc-data/source_code).
 
 ### Byte code
+
 - We used Solc compilation of [Crytic-compile](https://github.com/crytic/crytic-compile) to compile EVM creation/runtime bytecode from the source code of smart contracts. Then we used [EtherSolve](https://github.com/SeUniVr/EtherSolve) to generate CFGs for bytecode.
 
 ## System Description
 
-We run all experiments on 
+We run all experiments on
+
 - Ubuntu 20.04
 - CUDA 11.1
 - NVIDA 3080
@@ -85,6 +92,7 @@ We run all experiments on
 ## Install Environment
 
 Install python required packages.
+
 ```bash
 pip install -r requirements.txt -f https://download.pytorch.org/whl/lts/1.8/torch_lts.html -f https://data.pyg.org/whl/torch-1.8.0+cu111.html -f https://data.dgl.ai/wheels/repo.html
 ```
@@ -96,9 +104,11 @@ We provied inspection scripts for Graph Classification and Node Classification t
 ### Graph Classification
 
 Training Phase
+
 ```bash
 python -m experiments.graph_classification --epochs 50 --repeat 20
 ```
+
 To show the result table
 
 ```bash
@@ -108,9 +118,11 @@ python -m experiments.graph_classification --result
 ### Node Classification
 
 Training Phase
+
 ```bash
 python -m experiments.node_classification --epochs 50 --repeat 20
 ```
+
 To show the result table
 
 ```bash
@@ -119,8 +131,7 @@ python -m experiments.node_classification --result
 
 - We currently supported 7 types of bug: `access_control`, `arithmetic`, `denial_of_service`, `front_running`, `reentrancy`, `time_manipulation`, `unchecked_low_level_calls`.
 
-- Run the inspection 
-
+- Run the inspection
 
 ## Trainer
 
@@ -189,26 +200,31 @@ Optional configures:
 
 - Graph Classication for Heterogeous Control Flow Graphs (HCFGs) which detect vulnerabilites at the contract level.
   - GAE as node features.
+
 ```bash
 python graph_classifier.py -ld ./logs/graph_classification/cfg/gae/access_control --output_models ./models/graph_classification/cfg/gae/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/ --compressed_graph ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_compressed_graphs.gpickle --label ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/graph_labels.json --node_feature gae --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_gae_dim128_of_core_graph_of_access_control_cfg_clean_57_0.pkl --seed 1
 ```
 
 - Graph Classication for Heterogeous Call Graphs (HCGs) which detect vulnerabilites at the contract level.
   - LINE as node features.
+
 ```bash
 python graph_classifier.py -ld ./logs/graph_classification/cg/line/access_control --output_models ./models/graph_classification/cg/line/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/ --compressed_graph ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cg_compressed_graphs.gpickle --label ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/graph_labels.json --node_feature line --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_line_dim128_of_core_graph_of_access_control_cg_clean_57_0.pkl --seed 1
 ```
 
 - Graph Classication for combination of HCFGs and HCGs and which detect vulnerabilites at the contract level.
   - node2vec as node features.
+
 ```bash
 python graph_classifier.py -ld ./logs/graph_classification/cfg_cg/node2vec/access_control --output_models ./models/graph_classification/cfg_cg/node2vec/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/ --compressed_graph ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_cg_compressed_graphs.gpickle --label ./experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/graph_labels.json --node_feature node2vec --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_access_control_cfg_cg_clean_57_0.pkl --seed 1
 ```
 
 ### Node Classification
+
 - We used node classification tasks to detect vulnerabilites at the line level and function level for Heterogeneous Control flow graph (HCFGs) and Call Graphs (HCGs) in corressponding.
 
 #### Usage
+
 ```bash
 usage: MANDO Node Classifier [-h] [-s SEED] [-ld LOG_DIR]
                              [--output_models OUTPUT_MODELS]
@@ -273,37 +289,46 @@ Optional configures:
 ```
 
 #### Examples
+
 We prepared some scripts for the custom MANDO structures bellow:
 
 - Node Classication for Heterogeous Control Flow Graphs (HCFGs) which detect vulnerabilites at the line level.
+
   - GAE as node features for detection access_control bugs.
+
   ```bash
   python node_classifier.py -ld ./logs/node_classification/cfg/gae/access_control --output_models ./models/node_classification/cfg/gae/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/buggy_curated/ --compressed_graph ./experiments/ge-sc-data/source_code/access_control/buggy_curated/cfg_compressed_graphs.gpickle --node_feature gae --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_gae_dim128_of_core_graph_of_access_control_cfg_buggy_curated.pkl --testset ./experiments/ge-sc-data/source_code/access_control/curated --seed 1
-    ```
+  ```
 
 - Node Classification for Heterogeous Call Graphs (HCGs) which detect vulnerabilites at the function level.
-- The command lines are the same as CFG except the dataset. 
+- The command lines are the same as CFG except the dataset.
+
   - LINE as node features for detection access_control bugs.
+
   ```bash
   python node_classifier.py -ld ./logs/node_classification/cg/line/access_control --output_models ./models/node_classification/cg/line/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/buggy_curated --compressed_graph ./experiments/ge-sc-data/source_code/access_control/buggy_curated/cg_compressed_graphs.gpickle --node_feature line --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_line_dim128_of_core_graph_of_access_control_cg_buggy_curated.pkl --testset ./experiments/ge-sc-data/source_code/access_control/curated --seed 1
   ```
 
 - Node Classication for combination of HCFGs and HCGs and which detect vulnerabilites at the line level.
+
   - node2vec as node features.
+
   ```bash
   python node_classifier.py -ld ./logs/node_classification/cfg_cg/node2vec/access_control --output_models ./models/node_classification/cfg_cg/node2vec/access_control --dataset ./experiments/ge-sc-data/source_code/access_control/buggy_curated --compressed_graph ./experiments/ge-sc-data/source_code/access_control/buggy_curated/cfg_cg_compressed_graphs.gpickle --node_feature node2vec --feature_extractor ./experiments/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_access_control_cfg_cg_buggy_curated.pkl --testset ./experiments/ge-sc-data/source_code/access_control/curated --seed 1
   ```
 
-
 - We also stack 2 HAN layers for function-level detection. The first HAN layer is based on HCFGs used as feature for the second HAN layer based on HCGs (It will be deprecated in a future version).
+
 ```bash
 python node_classifier.py -ld ./logs/node_classification/call_graph/node2vec_han/access_control --output_models ./models/node_classification/call_graph/node2vec_han/access_control --dataset ./ge-sc-data/node_classification/cg/access_control/buggy_curated --compressed_graph ./ge-sc-data/node_classification/cg/access_control/buggy_curated/compressed_graphs.gpickle --testset ./ge-sc-data/node_classification/cg/curated/access_control --seed 1  --node_feature han --feature_compressed_graph ./data/smartbugs_wild/binary_class_cfg/access_control/buggy_curated/compressed_graphs.gpickle --cfg_feature_extractor ./data/smartbugs_wild/embeddings_buggy_currated_mixed/cfg_mixed/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_access_control_compressed_graphs.pkl --feature_extractor ./models/node_classification/cfg/node2vec/access_control/han_fold_0.pth
 ```
 
 ## Testing
+
 - We automatically run testing after training phase for now.
 
 ## Visuallization
+
 - You also use tensorboard and take a look the trend of metrics for both training phase and testing phase.
 
 ```bash

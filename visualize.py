@@ -288,11 +288,22 @@ if __name__ == '__main__':
         # Append statistics to data list
         tmp.append({
             'bug_type': bug,
-            'total_count': count,
+            'total_count': len(nx_graph.nodes(data=True)),
+            'byggy_count': count,
             'num_nodes': len(nx_graph.nodes()),
             'num_edges': len(nx_graph.edges()),
             'bug_nodes': bug_node
         })
+    #total 
+    tmp.append({
+        'bug_type': 'Total',
+        'total_count': sum(d['total_count'] for d in tmp),
+        'byggy_count': sum(d['byggy_count'] for d in tmp),
+        'num_nodes': sum(d['num_nodes'] for d in tmp),
+        'num_edges': sum(d['num_edges'] for d in tmp),
+        'bug_nodes': sum(d['bug_nodes'] for d in tmp)
+    })
 # Create DataFrame and save to CSV
 df = pd.DataFrame(tmp)
 df.to_csv('./visulalizes/GraphStatistic/graph_statistics.csv', index=False)
+print("SAVED STATISTIC TO CSV")
