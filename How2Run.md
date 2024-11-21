@@ -80,7 +80,39 @@ More information refer to the Docker documentation:
 
 ### Training the baselines models phase
 
-Here's the information from the image converted to markdown format:
+#### Graph Classification
+
+Training Phase
+
+```bash
+python -m experiments.graph_classification --epochs 50 --repeat 20
+```
+
+To show the result table
+
+```bash
+python -m experiments.graph_classification --result
+```
+
+---
+
+#### Node Classification
+
+Training Phase
+
+```bash
+python -m experiments.node_classification --epochs 50 --repeat 20
+```
+
+To show the result table
+
+```bash
+python -m experiments.node_classification --result
+```
+
+---
+
+# ------ IGNORE BELOW ------
 
 # Methods
 
@@ -126,6 +158,5 @@ Here's the information from the image converted to markdown format:
 14. sco_models/opcodes.py
 15. sco_models/utils.py
 16. sco_models/visualization.py
-
 
 Flag: `y0uf0undtheFl4g_m4nd0h67`
