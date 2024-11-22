@@ -16,23 +16,25 @@ Service: `mando-hgt-rebuild`
 |
 +---- data (Nothing)
 |
-+---- experiments (VERY IMPORTANT) | DO NOT overwrite the 2 python scripts | the other folder can be copy from Old MANDO
++---- experiments (VERY IMPORTANT)
 |        |
 |        |
-|        +---- ge-sc-data (DATASET), OVERWRITE THIS from OLd MANDO |
+|        +---- ge-sc-data (DATASET), OVERWRITE THIS from Old MANDO |
 |        |
 |        +---- models (Auto Generated)
-|        +---- logs (Auto Generated)
+|        +---- logs (Auto Generated) -- main result are here
 |        |
-|        +---- node_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|        +---- node_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS -- main running
 |        |
-|        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS -- main running
+|
+|
+|
 |
 |
 +---- forensics (Nothing)
 |
-+---- Mando (Contains the Mando, may not need to put it in, this is for ease of access to the old script to test it)
-|
++---- Mando (Contains the Old Mando, may not need to put it in, this is for ease of access to the old script to test it)
 |
 +---- ge-sc-data (Contains the Dataset repo below) | Extract from zip maybe?
 |        |
@@ -40,6 +42,7 @@ Service: `mando-hgt-rebuild`
 |        +---- node_classification
 |        +---- others
 |        \
+|
 |
 +---- models (Auto Generated)
 |
@@ -51,10 +54,20 @@ Service: `mando-hgt-rebuild`
 |
 +---- logs (Auto Generated)
 |
+|
+|
++---- cm.sh interesting command to use the graph_classifier.py and node_classifier.py, missing some gpickle files to run tho.
+|
 +---- How2Run.md
 |
++---- graph_classifier.py ( Maybe custom train)
+|
++---- node_classifier.py ( Maybe custom train)
 |
 +---- note.txt (Drawbacks or interesting stuff in paper) 
+|
++---- visualize.py (For visualize dataset for now)
+|
 |
 \
 
