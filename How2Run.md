@@ -79,6 +79,8 @@ Service: `mando-hgt-rebuild`
 
 ### Repositories:
 
+Follow above Dir tree to install and setup
+
 #### Old MANDO:
 
 `https://github.com/MANDO-Project/ge-sc.git`
@@ -95,17 +97,11 @@ Service: `mando-hgt-rebuild`
 
 ## Build docker
 
-To using docker
+To using docker (RECOMMENDED)
 
 `docker compose up` ( --build : to rebuild the docker with latest changes)
 
 `docker exec -ti <container name/id> /bin/bash`
-
-Or
-
-`docker build -t <image name/id> .`
-
-`docker run -itv .:/app/mando-hgt <image name/id>`
 
 More information refer to the Docker documentation:
 `https://docs.docker.com/compose/`
@@ -118,11 +114,17 @@ More information refer to the Docker documentation:
 
 ### Processing data to graphs phase
 
-1. `python process_graphs/call_graph_generator.py`
-2. `python process_graphs/control_flow_graph_generator.py`
-3. `python process_graphs/combination_call_graph_and_control_flow_graph_helper.py`
-4. `python process_graphs/byte_code_control_flow_graph_generator.py`
-   - This is for the baseline models
+   Please read the displayed Info when running the script.
+
+
+1. CG: `python process_graphs/call_graph_generator.py`
+
+2. CFG: `python process_graphs/control_flow_graph_generator.py`
+
+3. CG_CFG: `python process_graphs/combination_call_graph_and_control_flow_graph_helper.py`
+
+4. compressed GPICKLES: `python process_graphs/byte_code_control_flow_graph_generator.py`
+   - This is for the baseline models, please follow the number order
 
 ---
 
@@ -160,7 +162,13 @@ python -m experiments.node_classification --result
 
 ---
 
+
+
 # ------ IGNORE BELOW ------
+
+
+
+---
 
 # Methods
 
