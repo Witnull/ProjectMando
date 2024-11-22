@@ -16,9 +16,25 @@ Service: `mando-hgt-rebuild`
 |
 +---- data
 |
++--- experiments (VERY IMPORTANT) | DO NOT overwrite the 2 python scripts | the other folder can be copy from Old MANDO
+|        |
+|        |
+|        +---- ge-sc-data (DATASET), OVERWRITE THIS from OLd MANDO |
+|        |
+|        +---- models (Auto Generated)
+|        +---- logs (Auto Generated)
+|        |
+|        +---- node_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|        |
+|        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|
+|
 +---- forensics
 |
-+---- Mando (Contains the required dependencies from the repo below)
++---- Mando (Contains the Mando, may not need to put it in, this is for ease of access to the old script to test it)
+|
+|
++--- ge-sc-data (Contains the required dependencies from the Dataset repo below)
 |
 +---- models
 |
@@ -33,11 +49,15 @@ Service: `mando-hgt-rebuild`
 
 ## Required dependencies
 
-Repository:
+### Repositories:
+
+#### Old MANDO:
 
 `https://github.com/MANDO-Project/ge-sc.git`
 \
-\*\* Some of the data needed to build and run in this repository.
+\*\* copy the experiments folder's data.
+
+#### Dataset:
 
 `https://github.com/minhnn-tiny/ge-sc-dataset.git`
 \

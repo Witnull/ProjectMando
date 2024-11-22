@@ -111,7 +111,7 @@ threadpoolctl==3.5.0
 timebudget==0.7.1
 toolz==1.0.0
 # torch==2.4.0 # install in Dockerfile
-torch-geometric==2.6.1
+# torch-geometric==2.6.1
 # torchaudio==2.4.0
 # torchdata==0.8.0
 # torchutils==0.0.4
