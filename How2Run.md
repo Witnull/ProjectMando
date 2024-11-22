@@ -12,11 +12,11 @@ Service: `mando-hgt-rebuild`
 ```
 .
 |
-+---- assets
++---- assets (Nothing, just some paper stuffs)
 |
-+---- data
++---- data (Nothing)
 |
-+--- experiments (VERY IMPORTANT) | DO NOT overwrite the 2 python scripts | the other folder can be copy from Old MANDO
++---- experiments (VERY IMPORTANT) | DO NOT overwrite the 2 python scripts | the other folder can be copy from Old MANDO
 |        |
 |        |
 |        +---- ge-sc-data (DATASET), OVERWRITE THIS from OLd MANDO |
@@ -29,21 +29,36 @@ Service: `mando-hgt-rebuild`
 |        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
 |
 |
-+---- forensics
++---- forensics (Nothing)
 |
 +---- Mando (Contains the Mando, may not need to put it in, this is for ease of access to the old script to test it)
 |
 |
-+--- ge-sc-data (Contains the required dependencies from the Dataset repo below)
++---- ge-sc-data (Contains the Dataset repo below) | Extract from zip maybe?
+|        |
+|        +---- ijicai20
+|        +---- node_classification
+|        +---- others
+|        \
 |
-+---- models
++---- models (Auto Generated)
 |
-+---- process_graphs
++---- process_graphs (VERY IMPORTANT) | DO NOT OVERWRITE THIS
 |
-+---- sco_models
++---- sco_models (VERY IMPORTANT) | DO NOT OVERWRITE THIS
 |
-+---- utils
++---- utils (Self added stuff)
 |
++---- logs (Auto Generated)
+|
++---- How2Run.md
+|
+|
++---- note.txt (Drawbacks or interesting stuff in paper) 
+|
+\
+
+
 
 ```
 
