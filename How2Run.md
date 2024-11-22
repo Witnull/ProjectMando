@@ -7,7 +7,9 @@
 
 Service: `mando-hgt-rebuild`
 
-## Dir tree
+## Directories tree
+
+Some folders may not exist on repo, this is expected.
 
 ```
 .
@@ -64,7 +66,7 @@ Service: `mando-hgt-rebuild`
 |
 +---- node_classifier.py ( Maybe custom train)
 |
-+---- note.txt (Drawbacks or interesting stuff in paper) 
++---- note.txt (Drawbacks or interesting stuff in paper)
 |
 +---- visualize.py (For visualize dataset for now)
 |
@@ -114,8 +116,7 @@ More information refer to the Docker documentation:
 
 ### Processing data to graphs phase
 
-   Please read the displayed Info when running the script.
-
+Please read the displayed Info when running the script.
 
 1. CG: `python process_graphs/call_graph_generator.py`
 
@@ -162,11 +163,7 @@ python -m experiments.node_classification --result
 
 ---
 
-
-
 # ------ IGNORE BELOW ------
-
-
 
 ---
 
