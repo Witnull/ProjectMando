@@ -1,0 +1,43 @@
+Using HGT model
+Run experiments on 7 kinds of bug for 7 kinds of model.
+Repeat 2 times and 2 epochs for each experiment.
+[32mGet results ...[0m
+
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/access_control/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/access_control/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/access_control/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/access_control/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/arithmetic/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/arithmetic/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/arithmetic/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/arithmetic/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/denial_of_service/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/denial_of_service/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/denial_of_service/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/denial_of_service/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/front_running/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/front_running/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/front_running/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/front_running/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/reentrancy/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/reentrancy/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/reentrancy/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/reentrancy/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/time_manipulation/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/time_manipulation/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/time_manipulation/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/time_manipulation/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_line/unchecked_low_level_calls/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/base_node2vec/unchecked_low_level_calls/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/line/unchecked_low_level_calls/test_report.json not found!
+REPORT ./experiments/logs/graph_classification/byte_code/smartbugs/runtime/hgt/cfg_cg/node2vec/unchecked_low_level_calls/test_report.json not found!
+[32m
+|                   |          | access_control   | arithmetic   | denial_of_service   | front_running   | reentrancy   | time_manipulation   | unchecked_low_level_calls   |
+|-------------------+----------+------------------+--------------+---------------------+-----------------+--------------+---------------------+-----------------------------|
+| base_metapath2vec | Buggy-F1 | 68.54%           | 66.98%       | 70.28%              | 69.67%          | 68.39%       | 69.42%              | 67.38%                      |
+| base_metapath2vec | Macro-F1 | 57.70%           | 55.65%       | 58.55%              | 56.68%          | 52.09%       | 57.18%              | 54.43%                      |
+| nodetype          | Buggy-F1 | 81.94%           | 88.79%       | 85.71%              | 89.65%          | 85.86%       | 81.98%              | 76.93%                      |
+| nodetype          | Macro-F1 | 77.68%           | 87.34%       | 82.88%              | 87.00%          | 82.98%       | 75.17%              | 69.26%                      |
+| metapath2vec      | Buggy-F1 | 79.45%           | 77.92%       | 82.86%              | 89.55%          | 77.33%       | 82.05%              | 77.78%                      |
+| metapath2vec      | Macro-F1 | 74.47%           | 70.07%       | 68.35%              | 81.81%          | 72.00%       | 69.15%              | 70.14%                      |
+[0m

@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from statistics import mean
 
 from sco_models.model_hgt import HGTVulNodeClassifier
+#from newMethods.model_test import TEST_MODEL1
 from sco_models.utils import get_classification_report
 from sco_models.graph_utils import reveert_map_node_embedding, load_hetero_nx_graph
 
@@ -510,6 +511,46 @@ def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype,
     with open(join(logs, 'test_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
 
+# def test_model1(compressed_graph, source_code, dataset, feature_extractor, bugtype, device):
+    
+#     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/test_model1/{bugtype}/buggy_curated/'
+#     if not os.path.exists(logs):
+#         os.makedirs(logs)
+#     output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/test_model1/buggy_curated/'
+#     if not os.path.exists(output_models):
+#         os.makedirs(output_models)
+#     if not os.path.exists(output_models):
+#         os.makedirs(output_models)
+#     # feature_extractor = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_clean_{file_counter[bugtype]}_{DATA_ID}.pkl'
+#     node_feature = 'node2vec'
+#     model = TEST_MODEL1(compressed_graph, feature_extractor=feature_extractor, 
+#                                  node_feature=node_feature, device=device)
+#     train_mask, val_mask = dataset
+#     targets = torch.tensor(model.node_labels, device=device)
+#     model.to(device)
+#     model.reset_parameters()
+#     t0 = time()
+#     model = train(model, train_mask, targets, device)
+#     save_path = os.path.join(output_models, f'test_model1.pth')
+#     torch.save(model.state_dict(), save_path)
+#     t1 = time()
+#     model.eval()
+#     with torch.no_grad():
+#         logits = model()
+#         logits = logits.to(device)
+#         test_results = get_classification_report(targets[val_mask], logits[val_mask], output_dict=True)
+#     t2 = time()
+#     test_results['train_time'] = str(t1 - t0)
+#     test_results['test_time'] = str(t2 - t1)
+#     if os.path.isfile(join(logs, 'test_report.json')):
+#         with open(join(logs, 'test_report.json'), 'r') as f:
+#             report = json.load(f)
+#         report.append(test_results)
+#     else:
+#         report = [test_results]
+#     with open(join(logs, 'test_report.json'), 'w') as f:
+#         json.dump(report, f, indent=2)
+
 def print_info():
     '''
     Print information about the script.
@@ -533,16 +574,19 @@ def print_info():
 
     print(f"###### MANDO-HGT: \n")
     print(f"{Fore.CYAN} [5] Run MandoHGT nodetype (Default). OK - slow{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. ERR {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. OK - slow {Style.RESET_ALL}")
    # print(f"{Fore.CYAN} [7] Run MandoHGT gae. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [8] Run MandoHGT line. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [9] Run MandoHGT node2vec.  - slow{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
+
+    print(f"####### NEW MODEL: \n")
+    print(f"{Fore.CYAN} [10] Run xxxx {Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
     #print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
-    option_list = ['1', '2','3','4','5','6','7','8','9']
+    option_list = ['1', '2','3','4','5','6','7','8','9','10']
     option = '4'
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
@@ -610,6 +654,9 @@ def main(device):
                 line(compressed_graph, source_path,  dataset, line_embedded, bugtype, device)
             elif (option == '9'):
                 node2vec(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
+            elif (option == '10'):
+                print("not implemented")
+               # test_model1(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
             else:
                 print("Invalid option!")
                 sys.exit(1)
@@ -643,12 +690,12 @@ def get_results():
     for bugtype in bug_list:
         for model in models:
             report_path = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/buggy_curated/test_report.json'
-            
             if not os.path.exists(report_path):
                 print(f'REPORT {report_path} not found!')
                 continue
             try:
                 buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+              #  print(f'{Fore.GREEN}REPORT {report_path} found!{Style.RESET_ALL}')
             except:
                 buggy_f1, macro_f1 = 0.0, 0.0
             # buggy_f1, macro_f1 = get_max_results(report_path)

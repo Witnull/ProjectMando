@@ -32,3 +32,5 @@ ge-sc-dataset/*
 ge-sc-data/*
 ge-sc-dataset-eb9b8eb36decd03ecde5f7afe1c49dcec0932c09.zip
 *log*
+views/*
+visulizecode.py
