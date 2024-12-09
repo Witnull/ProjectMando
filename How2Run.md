@@ -79,7 +79,7 @@ Some folders may not exist on repo, this is expected.
 
 ## Required dependencies
 
-### Repositories:
+### Repositories (recommended using zip download):
 
 Follow above Dir tree to install and setup
 
@@ -117,8 +117,6 @@ More information refer to the Docker documentation:
 ### Processing data to graphs phase
 
 Please read the displayed Info when running the script.
-
-
 
 1. CFG: `python process_graphs/control_flow_graph_generator.py`
 
@@ -165,6 +163,7 @@ python -m experiments.node_classification --result
 
 ---
 
+<!--
 # ------ IGNORE BELOW ------
 
 ---
@@ -214,4 +213,4 @@ python -m experiments.node_classification --result
 15. sco_models/utils.py
 16. sco_models/visualization.py
 
-Flag: `y0uf0undtheFl4g_m4nd0h67`
+Flag: `y0uf0undtheFl4g_m4nd0h67` -->

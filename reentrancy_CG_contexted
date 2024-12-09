@@ -1,0 +1,356 @@
+digraph {
+	0 [label="0
+changeHashOwnership(bytes32,address)
+digitalNotary"]
+	1 [label="1
+setcontractactive(bool)
+digitalNotary"]
+	2 [label="2
+callme_re_ent14()
+digitalNotary"]
+	3 [label="3
+getHashDetails(bytes32,uint256)
+digitalNotary"]
+	4 [label="4
+fallback()
+digitalNotary"]
+	5 [label="5
+getHashOwnersCount(bytes32)
+digitalNotary"]
+	6 [label="6
+transfercontractbalance()
+digitalNotary"]
+	7 [label="7
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	8 [label="8
+withdraw_balances_re_ent8()
+digitalNotary"]
+	9 [label="9
+registerHash(bytes32)
+digitalNotary"]
+	10 [label="10
+buyTicket_re_ent37()
+digitalNotary"]
+	11 [label="11
+gethashfee()
+digitalNotary"]
+	12 [label="12
+withdrawBalance_re_ent33()
+digitalNotary"]
+	13 [label="13
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	14 [label="14
+buyTicket_re_ent30()
+digitalNotary"]
+	15 [label="15
+getchangehashownerfee()
+digitalNotary"]
+	16 [label="16
+buyTicket_re_ent9()
+digitalNotary"]
+	17 [label="17
+claimReward_re_ent39()
+digitalNotary"]
+	18 [label="18
+getcontractactive()
+digitalNotary"]
+	19 [label="19
+setchangehashownerfee(uint256)
+digitalNotary"]
+	20 [label="20
+getNumberofHashesRegistered()
+digitalNotary"]
+	21 [label="21
+constructor()
+digitalNotary"]
+	22 [label="22
+bug_re_ent20()
+digitalNotary"]
+	23 [label="23
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	24 [label="24
+buyTicket_re_ent2()
+digitalNotary"]
+	25 [label="25
+withdrawBalance_re_ent40()
+digitalNotary"]
+	26 [label="26
+callme_re_ent35()
+digitalNotary"]
+	27 [label="27
+withdrawBalance_re_ent26()
+digitalNotary"]
+	28 [label="28
+claimReward_re_ent25()
+digitalNotary"]
+	29 [label="29
+callme_re_ent7()
+digitalNotary"]
+	30 [label="30
+getcontractbalance()
+digitalNotary"]
+	31 [label="31
+getmanager()
+digitalNotary"]
+	32 [label="32
+buyTicket_re_ent23()
+digitalNotary"]
+	33 [label="33
+claimReward_re_ent4()
+digitalNotary"]
+	34 [label="34
+withdraw_balances_re_ent36()
+digitalNotary"]
+	35 [label="35
+withdrawFunds_re_ent38(uint256)
+digitalNotary"]
+	36 [label="36
+setmanager(address)
+digitalNotary"]
+	37 [label="37
+sethashfee(uint256)
+digitalNotary"]
+	38 [label="38
+withdrawBalance_re_ent19()
+digitalNotary"]
+	39 [label="39
+claimReward_re_ent32()
+digitalNotary"]
+	40 [label="40
+bug_re_ent27()
+digitalNotary"]
+	41 [label="41
+bug_re_ent13()
+digitalNotary"]
+	42 [label="42
+onlyManager()
+digitalNotary"]
+	43 [label="43
+WALLET(address)
+WALLET"]
+	44 [label="44
+fallback()
+WALLET"]
+	45 [label="45
+Put(uint256)
+WALLET"]
+	46 [label="46
+Collect(uint256)
+WALLET"]
+	47 [label="47
+AddMessage(address,uint256,string)
+Log"]
+	48 [label="48
+AddMessage(address,uint256,string)
+LogFile"]
+	49 [label="49
+Deposit()
+PERSONAL_BANK"]
+	50 [label="50
+SetLogFile(address)
+PERSONAL_BANK"]
+	51 [label="51
+fallback()
+PERSONAL_BANK"]
+	52 [label="52
+SetMinSum(uint256)
+PERSONAL_BANK"]
+	53 [label="53
+Initialized()
+PERSONAL_BANK"]
+	54 [label="54
+Collect(uint256)
+PERSONAL_BANK"]
+	55 [label="55
+sub(uint256,uint256)
+SafeMath"]
+	56 [label="56
+add(uint256,uint256)
+SafeMath"]
+	57 [label="57
+div(uint256,uint256)
+SafeMath"]
+	58 [label="58
+mul(uint256,uint256)
+SafeMath"]
+	59 [label="59
+buyTicket_re_ent2()
+Owned"]
+	60 [label="60
+callme_re_ent42()
+Owned"]
+	61 [label="61
+constructor()
+Owned"]
+	62 [label="62
+acceptOwnership()
+Owned"]
+	63 [label="63
+transferOwnership(address)
+Owned"]
+	64 [label="64
+withdrawFunds_re_ent17(uint256)
+Owned"]
+	65 [label="65
+withdrawFunds_re_ent31(uint256)
+Owned"]
+	66 [label="66
+onlyOwner()
+Owned"]
+	67 [label="67
+limitLessThan(uint256,uint256)
+ExtendedMath"]
+	68 [label="68
+withdrawBalance_re_ent26()
+_Yesbuzz"]
+	69 [label="69
+transfer(address,uint256)
+_Yesbuzz"]
+	70 [label="70
+buyTicket_re_ent9()
+_Yesbuzz"]
+	71 [label="71
+transferAnyERC20Token(address,uint256)
+_Yesbuzz"]
+	72 [label="72
+claimReward_re_ent4()
+_Yesbuzz"]
+	73 [label="73
+withdraw_balances_re_ent36()
+_Yesbuzz"]
+	74 [label="74
+balanceOf(address)
+_Yesbuzz"]
+	75 [label="75
+approveAndCall(address,uint256,bytes)
+_Yesbuzz"]
+	76 [label="76
+callme_re_ent7()
+_Yesbuzz"]
+	77 [label="77
+withdraw_balances_re_ent15()
+_Yesbuzz"]
+	78 [label="78
+withdrawBalance_re_ent40()
+_Yesbuzz"]
+	79 [label="79
+bug_re_ent34()
+_Yesbuzz"]
+	80 [label="80
+bug_re_ent20()
+_Yesbuzz"]
+	81 [label="81
+_reAdjustDifficulty()
+_Yesbuzz"]
+	82 [label="82
+totalSupply()
+_Yesbuzz"]
+	83 [label="83
+getChallengeNumber()
+_Yesbuzz"]
+	84 [label="84
+callme_re_ent35()
+_Yesbuzz"]
+	85 [label="85
+constructor()
+_Yesbuzz"]
+	86 [label="86
+withdrawBalance_re_ent19()
+_Yesbuzz"]
+	87 [label="87
+buyTicket_re_ent23()
+_Yesbuzz"]
+	88 [label="88
+callme_re_ent28()
+_Yesbuzz"]
+	89 [label="89
+withdrawFunds_re_ent3(uint256)
+_Yesbuzz"]
+	90 [label="90
+withdraw_balances_re_ent29()
+_Yesbuzz"]
+	91 [label="91
+withdrawFunds_re_ent24(uint256)
+_Yesbuzz"]
+	92 [label="92
+mint(uint256,bytes32)
+_Yesbuzz"]
+	93 [label="93
+getMiningDifficulty()
+_Yesbuzz"]
+	94 [label="94
+callme_re_ent14()
+_Yesbuzz"]
+	95 [label="95
+withdrawFunds_re_ent38(uint256)
+_Yesbuzz"]
+	96 [label="96
+claimReward_re_ent32()
+_Yesbuzz"]
+	97 [label="97
+bug_re_ent13()
+_Yesbuzz"]
+	98 [label="98
+withdrawBalance_re_ent5()
+_Yesbuzz"]
+	99 [label="99
+approve(address,uint256)
+_Yesbuzz"]
+	0 -> 5 [label="label: internal_call
+edge_type: internal_call"]
+	1 -> 42 [label="label: internal_call
+edge_type: internal_call"]
+	3 -> 5 [label="label: internal_call
+edge_type: internal_call"]
+	6 -> 42 [label="label: internal_call
+edge_type: internal_call"]
+	9 -> 5 [label="label: internal_call
+edge_type: internal_call"]
+	19 -> 42 [label="label: internal_call
+edge_type: internal_call"]
+	36 -> 42 [label="label: internal_call
+edge_type: internal_call"]
+	37 -> 42 [label="label: internal_call
+edge_type: internal_call"]
+	44 -> 45 [label="label: internal_call
+edge_type: internal_call"]
+	45 -> 47 [label="label: external_call
+edge_type: external_call"]
+	46 -> 47 [label="label: external_call
+edge_type: external_call"]
+	49 -> 48 [label="label: external_call
+edge_type: external_call"]
+	51 -> 49 [label="label: internal_call
+edge_type: internal_call"]
+	54 -> 48 [label="label: external_call
+edge_type: external_call"]
+	63 -> 66 [label="label: internal_call
+edge_type: internal_call"]
+	69 -> 57 [label="label: external_call
+edge_type: external_call"]
+	69 -> 58 [label="label: external_call
+edge_type: external_call"]
+	69 -> 55 [label="label: external_call
+edge_type: external_call"]
+	69 -> 56 [label="label: external_call
+edge_type: external_call"]
+	81 -> 57 [label="label: external_call
+edge_type: external_call"]
+	81 -> 67 [label="label: external_call
+edge_type: external_call"]
+	81 -> 56 [label="label: external_call
+edge_type: external_call"]
+	81 -> 58 [label="label: external_call
+edge_type: external_call"]
+	81 -> 55 [label="label: external_call
+edge_type: external_call"]
+	85 -> 57 [label="label: external_call
+edge_type: external_call"]
+	92 -> 56 [label="label: external_call
+edge_type: external_call"]
+	93 -> 57 [label="label: external_call
+edge_type: external_call"]
+}

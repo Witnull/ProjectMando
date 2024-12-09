@@ -1,0 +1,484 @@
+digraph {
+	0 [label="0
+buyTicket_re_ent2()
+digitalNotary"]
+	1 [label="1
+buyTicket_re_ent2()
+digitalNotary"]
+	2 [label="2
+buyTicket_re_ent2()
+digitalNotary"]
+	3 [label="3
+buyTicket_re_ent2()
+digitalNotary"]
+	4 [label="4
+buyTicket_re_ent2()
+digitalNotary"]
+	5 [label="5
+buyTicket_re_ent2()
+digitalNotary"]
+	6 [label="6
+buyTicket_re_ent2()
+digitalNotary"]
+	7 [label="7
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	8 [label="8
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	9 [label="9
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	10 [label="10
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	11 [label="11
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	12 [label="12
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	13 [label="13
+withdrawFunds_re_ent17(uint256)
+digitalNotary"]
+	14 [label="14
+buyTicket_re_ent37()
+digitalNotary"]
+	15 [label="15
+buyTicket_re_ent37()
+digitalNotary"]
+	16 [label="16
+buyTicket_re_ent37()
+digitalNotary"]
+	17 [label="17
+buyTicket_re_ent37()
+digitalNotary"]
+	18 [label="18
+buyTicket_re_ent37()
+digitalNotary"]
+	19 [label="19
+buyTicket_re_ent37()
+digitalNotary"]
+	20 [label="20
+buyTicket_re_ent37()
+digitalNotary"]
+	21 [label="21
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	22 [label="22
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	23 [label="23
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	24 [label="24
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	25 [label="25
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	26 [label="26
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	27 [label="27
+withdrawFunds_re_ent3(uint256)
+digitalNotary"]
+	28 [label="28
+buyTicket_re_ent9()
+digitalNotary"]
+	29 [label="29
+buyTicket_re_ent9()
+digitalNotary"]
+	30 [label="30
+buyTicket_re_ent9()
+digitalNotary"]
+	31 [label="31
+buyTicket_re_ent9()
+digitalNotary"]
+	32 [label="32
+buyTicket_re_ent9()
+digitalNotary"]
+	33 [label="33
+buyTicket_re_ent9()
+digitalNotary"]
+	34 [label="34
+buyTicket_re_ent9()
+digitalNotary"]
+	35 [label="35
+buyTicket_re_ent9()
+digitalNotary"]
+	36 [label="36
+buyTicket_re_ent9()
+digitalNotary"]
+	37 [label="37
+claimReward_re_ent25()
+digitalNotary"]
+	38 [label="38
+claimReward_re_ent25()
+digitalNotary"]
+	39 [label="39
+claimReward_re_ent25()
+digitalNotary"]
+	40 [label="40
+claimReward_re_ent25()
+digitalNotary"]
+	41 [label="41
+claimReward_re_ent25()
+digitalNotary"]
+	42 [label="42
+claimReward_re_ent25()
+digitalNotary"]
+	43 [label="43
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	44 [label="44
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	45 [label="45
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	46 [label="46
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	47 [label="47
+withdrawFunds_re_ent31(uint256)
+digitalNotary"]
+	48 [label="48
+bug_re_ent13()
+digitalNotary"]
+	49 [label="49
+bug_re_ent13()
+digitalNotary"]
+	50 [label="50
+bug_re_ent13()
+digitalNotary"]
+	51 [label="51
+bug_re_ent13()
+digitalNotary"]
+	52 [label="52
+bug_re_ent13()
+digitalNotary"]
+	53 [label="53
+bug_re_ent13()
+digitalNotary"]
+	54 [label="54
+bug_re_ent13()
+digitalNotary"]
+	55 [label="55
+bug_re_ent13()
+digitalNotary"]
+	56 [label="56
+bug_re_ent13()
+digitalNotary"]
+	57 [label="57
+constructor()
+digitalNotary"]
+	58 [label="58
+constructor()
+digitalNotary"]
+	59 [label="59
+constructor()
+digitalNotary"]
+	60 [label="60
+constructor()
+digitalNotary"]
+	61 [label="61
+constructor()
+digitalNotary"]
+	62 [label="62
+constructor()
+digitalNotary"]
+	63 [label="63
+constructor()
+digitalNotary"]
+	64 [label="64
+withdrawBalance_re_ent19()
+digitalNotary"]
+	65 [label="65
+withdrawBalance_re_ent19()
+digitalNotary"]
+	66 [label="66
+withdrawBalance_re_ent19()
+digitalNotary"]
+	67 [label="67
+withdrawBalance_re_ent19()
+digitalNotary"]
+	68 [label="68
+withdrawBalance_re_ent19()
+digitalNotary"]
+	69 [label="69
+withdrawBalance_re_ent19()
+digitalNotary"]
+	70 [label="70
+gethashfee()
+digitalNotary"]
+	71 [label="71
+gethashfee()
+digitalNotary"]
+	72 [label="72
+gethashfee()
+digitalNotary"]
+	73 [label="73
+withdrawBalance_re_ent26()
+digitalNotary"]
+	74 [label="74
+withdrawBalance_re_ent26()
+digitalNotary"]
+	75 [label="75
+withdrawBalance_re_ent26()
+digitalNotary"]
+	76 [label="76
+withdrawBalance_re_ent26()
+digitalNotary"]
+	77 [label="77
+withdrawBalance_re_ent26()
+digitalNotary"]
+	78 [label="78
+withdrawBalance_re_ent26()
+digitalNotary"]
+	79 [label="79
+withdrawBalance_re_ent26()
+digitalNotary"]
+	80 [label="80
+withdrawBalance_re_ent26()
+digitalNotary"]
+	81 [label="81
+sethashfee(uint256)
+digitalNotary"]
+	82 [label="82
+sethashfee(uint256)
+digitalNotary"]
+	83 [label="83
+sethashfee(uint256)
+digitalNotary"]
+	84 [label="84
+sethashfee(uint256)
+digitalNotary"]
+	85 [label="85
+sethashfee(uint256)
+digitalNotary"]
+	86 [label="86
+bug_re_ent20()
+digitalNotary"]
+	87 [label="87
+bug_re_ent20()
+digitalNotary"]
+	88 [label="88
+bug_re_ent20()
+digitalNotary"]
+	89 [label="89
+bug_re_ent20()
+digitalNotary"]
+	90 [label="90
+bug_re_ent20()
+digitalNotary"]
+	91 [label="91
+bug_re_ent20()
+digitalNotary"]
+	92 [label="92
+bug_re_ent20()
+digitalNotary"]
+	93 [label="93
+getchangehashownerfee()
+digitalNotary"]
+	94 [label="94
+getchangehashownerfee()
+digitalNotary"]
+	95 [label="95
+getchangehashownerfee()
+digitalNotary"]
+	96 [label="96
+claimReward_re_ent32()
+digitalNotary"]
+	97 [label="97
+claimReward_re_ent32()
+digitalNotary"]
+	98 [label="98
+claimReward_re_ent32()
+digitalNotary"]
+	99 [label="99
+claimReward_re_ent32()
+digitalNotary"]
+	0 -> 1 [label="edge_type: next
+label: Next"]
+	1 -> 2 [label="edge_type: if_true
+label: True"]
+	1 -> 3 [label="edge_type: if_false
+label: False"]
+	2 -> 3 [label="edge_type: next
+label: Next"]
+	3 -> 4 [label="edge_type: next
+label: Next"]
+	4 -> 5 [label="edge_type: next
+label: Next"]
+	6 -> 0 [label="edge_type: next
+label: Next"]
+	7 -> 8 [label="edge_type: next
+label: Next"]
+	8 -> 9 [label="edge_type: next
+label: Next"]
+	9 -> 10 [label="edge_type: next
+label: Next"]
+	10 -> 11 [label="edge_type: next
+label: Next"]
+	11 -> 12 [label="edge_type: next
+label: Next"]
+	13 -> 7 [label="edge_type: next
+label: Next"]
+	14 -> 15 [label="edge_type: next
+label: Next"]
+	15 -> 16 [label="edge_type: if_true
+label: True"]
+	15 -> 17 [label="edge_type: if_false
+label: False"]
+	16 -> 17 [label="edge_type: next
+label: Next"]
+	17 -> 18 [label="edge_type: next
+label: Next"]
+	18 -> 19 [label="edge_type: next
+label: Next"]
+	20 -> 14 [label="edge_type: next
+label: Next"]
+	21 -> 22 [label="edge_type: next
+label: Next"]
+	22 -> 23 [label="edge_type: next
+label: Next"]
+	23 -> 24 [label="edge_type: next
+label: Next"]
+	24 -> 25 [label="edge_type: next
+label: Next"]
+	25 -> 26 [label="edge_type: next
+label: Next"]
+	27 -> 21 [label="edge_type: next
+label: Next"]
+	28 -> 29 [label="edge_type: next
+label: Next"]
+	29 -> 30 [label="edge_type: next
+label: Next"]
+	30 -> 31 [label="edge_type: next
+label: Next"]
+	31 -> 32 [label="edge_type: if_true
+label: True"]
+	31 -> 33 [label="edge_type: if_false
+label: False"]
+	32 -> 33 [label="edge_type: next
+label: Next"]
+	33 -> 34 [label="edge_type: next
+label: Next"]
+	34 -> 35 [label="edge_type: next
+label: Next"]
+	36 -> 28 [label="edge_type: next
+label: Next"]
+	37 -> 38 [label="edge_type: next
+label: Next"]
+	38 -> 39 [label="edge_type: next
+label: Next"]
+	39 -> 40 [label="edge_type: next
+label: Next"]
+	40 -> 41 [label="edge_type: next
+label: Next"]
+	42 -> 37 [label="edge_type: next
+label: Next"]
+	43 -> 44 [label="edge_type: next
+label: Next"]
+	44 -> 45 [label="edge_type: next
+label: Next"]
+	45 -> 46 [label="edge_type: next
+label: Next"]
+	47 -> 43 [label="edge_type: next
+label: Next"]
+	48 -> 49 [label="edge_type: next
+label: Next"]
+	49 -> 50 [label="edge_type: next
+label: Next"]
+	50 -> 51 [label="edge_type: next
+label: Next"]
+	51 -> 52 [label="edge_type: next
+label: Next"]
+	52 -> 53 [label="edge_type: if_true
+label: True"]
+	52 -> 54 [label="edge_type: if_false
+label: False"]
+	53 -> 54 [label="edge_type: next
+label: Next"]
+	54 -> 55 [label="edge_type: next
+label: Next"]
+	56 -> 48 [label="edge_type: next
+label: Next"]
+	57 -> 58 [label="edge_type: next
+label: Next"]
+	58 -> 59 [label="edge_type: next
+label: Next"]
+	59 -> 60 [label="edge_type: next
+label: Next"]
+	60 -> 61 [label="edge_type: next
+label: Next"]
+	61 -> 62 [label="edge_type: next
+label: Next"]
+	63 -> 57 [label="edge_type: next
+label: Next"]
+	64 -> 65 [label="edge_type: next
+label: Next"]
+	65 -> 66 [label="edge_type: if_true
+label: True"]
+	65 -> 67 [label="edge_type: if_false
+label: False"]
+	66 -> 67 [label="edge_type: next
+label: Next"]
+	67 -> 68 [label="edge_type: next
+label: Next"]
+	69 -> 64 [label="edge_type: next
+label: Next"]
+	70 -> 71 [label="edge_type: next
+label: Next"]
+	72 -> 70 [label="edge_type: next
+label: Next"]
+	73 -> 74 [label="edge_type: next
+label: Next"]
+	74 -> 75 [label="edge_type: next
+label: Next"]
+	75 -> 76 [label="edge_type: next
+label: Next"]
+	76 -> 77 [label="edge_type: if_true
+label: True"]
+	76 -> 78 [label="edge_type: if_false
+label: False"]
+	77 -> 78 [label="edge_type: next
+label: Next"]
+	78 -> 79 [label="edge_type: next
+label: Next"]
+	80 -> 73 [label="edge_type: next
+label: Next"]
+	81 -> 84 [label="edge_type: next
+label: Next"]
+	82 -> 83 [label="edge_type: next
+label: Next"]
+	84 -> 82 [label="edge_type: next
+label: Next"]
+	85 -> 81 [label="edge_type: next
+label: Next"]
+	86 -> 87 [label="edge_type: next
+label: Next"]
+	87 -> 88 [label="edge_type: next
+label: Next"]
+	88 -> 89 [label="edge_type: if_true
+label: True"]
+	88 -> 90 [label="edge_type: if_false
+label: False"]
+	89 -> 90 [label="edge_type: next
+label: Next"]
+	90 -> 91 [label="edge_type: next
+label: Next"]
+	92 -> 86 [label="edge_type: next
+label: Next"]
+	93 -> 94 [label="edge_type: next
+label: Next"]
+	95 -> 93 [label="edge_type: next
+label: Next"]
+	96 -> 97 [label="edge_type: next
+label: Next"]
+	97 -> 98 [label="edge_type: next
+label: Next"]
+	98 -> 99 [label="edge_type: next
+label: Next"]
+}

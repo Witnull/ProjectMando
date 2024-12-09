@@ -442,6 +442,10 @@ if __name__ == '__main__':
     # source_compressed_graph = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_compressed_graphs.gpickle'
     # # forencis_gpickle(source_compressed_graph)
     # forencis_gpickle(source_compressed_graph)
+    if option == 'x':
+        
+
+
     if option == '1':
         print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve...{Style.RESET_ALL}')
         print(f'{Fore.CYAN} [INFO] Generating annotation files...{Style.RESET_ALL}')

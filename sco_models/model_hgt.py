@@ -550,6 +550,7 @@ class HGTVulGraphClassifier(nn.Module):
                     layer.reset_parameters()
 
     def forward(self, batched_g_name, save_featrues=None):
+        #print("Forwarding...")
         h = {}
         hiddens = torch.zeros((self.symmetrical_global_graph.number_of_nodes(), self.hidden_size), device=self.device)
         for ntype in self.symmetrical_global_graph.ntypes:

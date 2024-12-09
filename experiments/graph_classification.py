@@ -98,7 +98,7 @@ def train(model, train_loader, labels, device):
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0002)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.005, total_steps=total_steps)
     for _ in range(total_steps):
-        #print(f'Training epoch: {_+1}/{total_steps}')
+        print(f'Training epoch: {_+1}/{total_steps}')
         optimizer.zero_grad()
         logits, _ = model(train_loader)
         logits = logits.to(device)
@@ -348,10 +348,13 @@ def base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device):
         json.dump(report, f, indent=2)
 
 
-def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device):
+def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_only=False,verify_set=None):
     logs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
+    testlogs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
     if not os.path.exists(logs):
         os.makedirs(logs)
+    if not os.path.exists(testlogs):
+        os.makedirs(testlogs)
     output_models = f'{ROOT}/models/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
@@ -365,19 +368,30 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device):
     model.to(device)
     X_train, X_val, y_train, y_val = dataset
 
-    print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
-
-    model = train(model, X_train, y_train, device)
+    
+    if test_only == False:
+        print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
+        model = train(model, X_train, y_train, device)
+    else:
+        print(f"Verify set:{verify_set}\n\n")
+        print(f"X_val:{X_val}\n\n")
+        model.load_state_dict(torch.load(join(output_models, f'hgt.pth'),weights_only=True))
 
     save_path = os.path.join(output_models, f'hgt.pth')
     torch.save(model.state_dict(), save_path)
     model.eval()
     with torch.no_grad():
-        logits, hiddens = model(X_val)
+        logits, hiddens = model(X_val) if test_only == False else model(verify_set)
         logits = logits.to(device)
         # test_acc, test_micro_f1, test_macro_f1 = score(y_val, logits)
-        test_results = get_classification_report(y_val, logits, output_dict=True)
+        test_results = {}
+        if test_only == False:
+            test_results = get_classification_report(y_val, logits, output_dict=True)
+        else:
+            print(logits, hiddens)
+
     save_last_hidden(hiddens, y_val, X_val, join(logs, 'last_hiddens.json'))
+
     if os.path.isfile(join(logs, 'test_report.json')):
         with open(join(logs, 'test_report.json'), 'r') as f:
             report = json.load(f)
@@ -627,6 +641,8 @@ def zeros(compressed_graph, dataset, feature_dims, bugtype, device):
         report = [test_results]
     with open(join(logs, 'test_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
+def full_test_execution(compressed_graph, dataset, verify_set , line_embedded, node2vec_embedded, bugtype):
+    nodetype(compressed_graph, dataset, None, bugtype, device, test_only=True,verify_set=verify_set) ## default
 
 def print_info():
     '''
@@ -654,12 +670,12 @@ def print_info():
     print(f"{Fore.CYAN} [8] Run MandoHGT node2vec. ERR -- mising files{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
-
-
+    print(f"###### TEST: \n")
+    print(f"{Fore.CYAN} [ft] Run test{Style.RESET_ALL}")
     #print(f"\n\n {Back.RED}!!! Warning: Maybe u need to plug-in .{Style.RESET_ALL}")
     #print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
-    option_list = ['1', '2','3','4','5','6','7','8','a']
+    option_list = ['1', '2','3','4','5','6','7','8','a','ft']
     option = '4'
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
@@ -673,7 +689,7 @@ def main(device):
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
-            print(f'Train bugtype {bugtype} {i+1}-th/{REPEAT} reppeat ')
+            print(f'Processing bugtype {bugtype} {i+1}-th/{REPEAT} reppeat ')
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
             nx_graph = nx.read_gpickle(compressed_graph)
             file_name_dict = get_node_id_by_file_name(nx_graph)
@@ -684,6 +700,20 @@ def main(device):
                 annotations = json.load(f)
             # total_files = [f for f in os.listdir(source_path) if f.endswith('.gpickle')]
             total_files = [anno['contract_name'] for anno in annotations]
+            #print(total_files)
+
+
+            ###VERIFY SET 
+            verify_compressed_graph = f'./newMethods/sampleDataset/bytecode_compressed_graphs.gpickle'
+            verify_nx_graph = nx.read_gpickle(compressed_graph)
+            verify_file_name_dict = get_node_id_by_file_name(nx_graph)
+            total_verify_files = tuple([f for f in os.listdir(f'./newMethods/sampleDataset') if f.endswith('.sol')])
+            print(total_verify_files)
+            
+            
+            
+            
+            
             assert len(total_files) <= len(annotations)
             # targets = []
             # for file in total_files:
@@ -692,12 +722,15 @@ def main(device):
             #     except StopIteration:
             #         raise f'{file} not found!'
             #     targets.append(target)
+
             targets = [anno['targets'] for anno in annotations]
             targets = torch.tensor(targets, device=device)
+
             assert len(total_files) == len(targets)
             print(len(total_files), len(targets))
             X_train, X_val, y_train, y_val = train_test_split(total_files, targets, train_size=TRAIN_RATE)
             dataset = (tuple(X_train), tuple(X_val), y_train, y_val)
+
             print('Start training with {}/{} train/val smart contracts'.format(len(X_train), len(X_val)))
             gae_embedded = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/gesc_matrices_node_embedding/matrix_gae_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_compressed_graphs.pkl'
             line_embedded = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/gesc_matrices_node_embedding/balanced/matrix_line_dim128_of_core_graph_of_{bugtype}_{BYTECODE}_balanced_{COMPRESSED_GRAPH}_compressed_graphs.pkl'
@@ -722,6 +755,8 @@ def main(device):
                 line(compressed_graph, dataset, line_embedded, bugtype, device)
             elif(option == '8'):
                 node2vec(compressed_graph, dataset, node2vec_embedded, bugtype, device)
+            elif option == 'ft':
+                full_test_execution(compressed_graph, dataset, total_verify_files , line_embedded, node2vec_embedded, bugtype)
             else:   
                 print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
                 sys.exit(1)
