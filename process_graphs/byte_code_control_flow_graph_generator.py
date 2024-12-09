@@ -481,7 +481,7 @@ if __name__ == '__main__':
 
         # generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
         # generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')     
-
+        print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
         creation_graph_path = CREATION_OUT_GRAPH
         runtime_graph_path = RUNTIME_OUT_GRAPH
         creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
@@ -489,16 +489,19 @@ if __name__ == '__main__':
         creation_gpickle_output = CREATION_OUT_GPICKLES
         runtime_gpickle_output = RUNTIME_OUT_GPICKLES
 
+
         for dot in creation_dot_files:
             dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
         for dot in runtime_dot_files:
             dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
         
-        creation_gpickle_files = [f.replace('.sol','.gpickle') for f in os.listdir(SOURCE_DATA) if f.endswith('.sol')]     
+        print(f'{Fore.CYAN} [INFO] Merging .gpickle {Style.RESET_ALL}')
+
+        creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
         creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
 
        
-        runtime_gpickle_files = [f.replace('.sol','.gpickle') for f in os.listdir(SOURCE_DATA) if f.endswith('.sol')]    
+        runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
         runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
 
         merge_byte_code_cfg(CREATION_OUT_GPICKLES, creation_gpickle_files, creation_balanced_compressed_graph)
@@ -511,7 +514,7 @@ if __name__ == '__main__':
         copy(runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
 
         print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
-
+        sys.exit(0)
 
     if option == '1':
         print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve...{Style.RESET_ALL}')
@@ -585,7 +588,7 @@ if __name__ == '__main__':
         print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
         sys.exit(0)
 
-    if options == '3b':
+    if option == '3b':
         # Convert dot to gpickle
         for bug, counter in bug_type.items():
             creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
