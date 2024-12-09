@@ -703,12 +703,12 @@ def main(device):
             #print(total_files)
 
 
-            ###VERIFY SET 
-            verify_compressed_graph = f'./newMethods/sampleDataset/bytecode_compressed_graphs.gpickle'
-            verify_nx_graph = nx.read_gpickle(compressed_graph)
-            verify_file_name_dict = get_node_id_by_file_name(nx_graph)
-            total_verify_files = tuple([f for f in os.listdir(f'./newMethods/sampleDataset') if f.endswith('.sol')])
-            print(total_verify_files)
+            # ###VERIFY SET 
+            # verify_compressed_graph = f'./newMethods/sampleDataset/bytecode_compressed_graphs.gpickle'
+            # verify_nx_graph = nx.read_gpickle(compressed_graph)
+            # verify_file_name_dict = get_node_id_by_file_name(nx_graph)
+            # total_verify_files = tuple([f for f in os.listdir(f'./newMethods/sampleDataset') if f.endswith('.sol')])
+            # print(total_verify_files)
             
             
             

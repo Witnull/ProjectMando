@@ -410,6 +410,7 @@ def print_info():
     print(f"{Fore.CYAN} [2a] Generate creation files. {Fore.YELLOW}(Required for option 3, 4, 5){Style.RESET_ALL}")
     print(f"{Fore.CYAN} [2b] Generate runtime files. {Fore.YELLOW}(Required for option 3, 4, 5){Style.RESET_ALL}")
     print(f"{Fore.CYAN} [3] Generate graph from evm files by EtherSolve.{Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [3b] Convert .dot to .gpickle {Style.RESET_ALL}")
     print(f"{Fore.CYAN} [4] Create balanced dataset.{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [5] Merge .gpickles files into {Fore.YELLOW}compressred_graph.gpickle {Fore.CYAN} file.{Style.RESET_ALL}")
 
@@ -418,7 +419,7 @@ def print_info():
     # Function to wait for user input before proceeding
 
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
-    option_list = ['1', '2a', '2b', '3','4','5','x']
+    option_list = ['1', '2a', '2b', '3','3b','4','5','x']
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
         print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
@@ -471,22 +472,33 @@ if __name__ == '__main__':
         os.makedirs(RUNTIME_OUT_GPICKLES, exist_ok=True)
         os.makedirs(RUNTIME_OUT_GPICKLES_COMPRESSED, exist_ok=True)
 
-        print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
-        # Generate crytic evm files
-        generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
+        # print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
+        # # Generate crytic evm files
+        # generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
 
-        print(f'{Fore.CYAN} [INFO] Generating creation and runtime files...{Style.RESET_ALL}')
-        generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
+        # print(f'{Fore.CYAN} [INFO] Generating creation and runtime files...{Style.RESET_ALL}')
+        # generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
 
-        generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
-        generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')     
+        # generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
+        # generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')     
 
-           
-        creation_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in creation_annotations]      
+        creation_graph_path = CREATION_OUT_GRAPH
+        runtime_graph_path = RUNTIME_OUT_GRAPH
+        creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
+        runtime_dot_files = [f for f in os.listdir(runtime_graph_path) if f.endswith('.dot')]
+        creation_gpickle_output = CREATION_OUT_GPICKLES
+        runtime_gpickle_output = RUNTIME_OUT_GPICKLES
+
+        for dot in creation_dot_files:
+            dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
+        for dot in runtime_dot_files:
+            dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
+        
+        creation_gpickle_files = [f.replace('.sol','.gpickle') for f in os.listdir(SOURCE_DATA) if f.endswith('.sol')]     
         creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
 
        
-        runtime_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in runtime_annotations]
+        runtime_gpickle_files = [f.replace('.sol','.gpickle') for f in os.listdir(SOURCE_DATA) if f.endswith('.sol')]    
         runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
 
         merge_byte_code_cfg(CREATION_OUT_GPICKLES, creation_gpickle_files, creation_balanced_compressed_graph)
@@ -573,21 +585,22 @@ if __name__ == '__main__':
         print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
         sys.exit(0)
 
-    # # Convert dot to gpickle
-    # for bug, counter in bug_type.items():
-    #     creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
-    #     runtime_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
-    #     creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
-    #     runtime_dot_files = [f for f in os.listdir(runtime_graph_path) if f.endswith('.dot')]
-    #     creation_gpickle_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{counter}_buggy_curated_0'
-    #     runtime_gpickle_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{counter}_buggy_curated_0'
-    #     os.makedirs(creation_gpickle_output, exist_ok=True)
-    #     os.makedirs(runtime_gpickle_output, exist_ok=True)
-    #     for dot in creation_dot_files:
-    #         dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
-    #     for dot in runtime_dot_files:
-    #         dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
-    
+    if options == '3b':
+        # Convert dot to gpickle
+        for bug, counter in bug_type.items():
+            creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
+            runtime_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
+            creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
+            runtime_dot_files = [f for f in os.listdir(runtime_graph_path) if f.endswith('.dot')]
+            creation_gpickle_output = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/gpickles/{bug}/clean_{counter}_buggy_curated_0'
+            runtime_gpickle_output = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/gpickles/{bug}/clean_{counter}_buggy_curated_0'
+            os.makedirs(creation_gpickle_output, exist_ok=True)
+            os.makedirs(runtime_gpickle_output, exist_ok=True)
+            for dot in creation_dot_files:
+                dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
+            for dot in runtime_dot_files:
+                dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
+        
     if option == '4':
         print(f'{Fore.CYAN} [INFO] Generating balanced dataset...{Style.RESET_ALL}')
         print(f'{Fore.CYAN} [INFO] If error, maybe require creation and runtime files. Please using option 2 {Style.RESET_ALL}')
