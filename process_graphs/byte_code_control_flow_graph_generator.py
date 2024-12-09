@@ -418,7 +418,7 @@ def print_info():
     # Function to wait for user input before proceeding
 
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
-    option_list = ['1', '2a', '2b', '3','4','5']
+    option_list = ['1', '2a', '2b', '3','4','5','x']
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
         print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
@@ -443,7 +443,62 @@ if __name__ == '__main__':
     # # forencis_gpickle(source_compressed_graph)
     # forencis_gpickle(source_compressed_graph)
     if option == 'x':
-        
+        SOURCE_DATA = './newMethods/sampleDataset'
+        CRYTIC_EVM_OUT= f'{SOURCE_DATA}/crytic_evm'
+
+        CREATION_OUT = f'{SOURCE_DATA}/creation'
+        CREATION_OUT_EVM = f'{CREATION_OUT}/evm'
+        CREATION_OUT_GRAPH = f'{CREATION_OUT}/graphs'
+        CREATION_OUT_GPICKLES = f'{CREATION_OUT}/gpickles'
+        CREATION_OUT_GPICKLES_COMPRESSED = f'{CREATION_OUT_GPICKLES}/compressed_graphs'
+
+        RUNTIME_OUT = f'{SOURCE_DATA}/runtime'
+        RUNTIME_OUT_EVM = f'{RUNTIME_OUT}/evm'
+        RUNTIME_OUT_GRAPH = f'{RUNTIME_OUT}/graphs'
+        RUNTIME_OUT_GPICKLES = f'{RUNTIME_OUT}/gpickles'
+        RUNTIME_OUT_GPICKLES_COMPRESSED = f'{RUNTIME_OUT_GPICKLES}/compressed_graphs'
+
+        os.makedirs(SOURCE_DATA, exist_ok=True)
+        os.makedirs(CRYTIC_EVM_OUT, exist_ok=True)
+        os.makedirs(CREATION_OUT, exist_ok=True)
+        os.makedirs(CREATION_OUT_EVM, exist_ok=True)
+        os.makedirs(CREATION_OUT_GRAPH, exist_ok=True)
+        os.makedirs(CREATION_OUT_GPICKLES, exist_ok=True)
+        os.makedirs(CREATION_OUT_GPICKLES_COMPRESSED, exist_ok=True)
+        os.makedirs(RUNTIME_OUT, exist_ok=True)
+        os.makedirs(RUNTIME_OUT_EVM, exist_ok=True)
+        os.makedirs(RUNTIME_OUT_GRAPH, exist_ok=True)
+        os.makedirs(RUNTIME_OUT_GPICKLES, exist_ok=True)
+        os.makedirs(RUNTIME_OUT_GPICKLES_COMPRESSED, exist_ok=True)
+
+        print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
+        # Generate crytic evm files
+        generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
+
+        print(f'{Fore.CYAN} [INFO] Generating creation and runtime files...{Style.RESET_ALL}')
+        generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
+
+        generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
+        generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')     
+
+           
+        creation_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in creation_annotations]      
+        creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
+
+       
+        runtime_gpickle_files = [ann['contract_name'].replace('.sol', '.gpickle') for ann in runtime_annotations]
+        runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
+
+        merge_byte_code_cfg(CREATION_OUT_GPICKLES, creation_gpickle_files, creation_balanced_compressed_graph)
+        merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, runtime_gpickle_files, runtime_balanced_compressed_graph)
+
+        output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
+        output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
+
+        copy(creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
+        copy(runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+
+        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
 
 
     if option == '1':
