@@ -1,0 +1,36 @@
+Run experiments on 7 kinds of bug for 9 kinds of model.
+Repeat 2 times and 2 epochs for each experiment.
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/arithmetic/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/arithmetic/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/denial_of_service/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/denial_of_service/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/front_running/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/front_running/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/reentrancy/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/reentrancy/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/time_manipulation/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/time_manipulation/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/line/unchecked_low_level_calls/buggy_curated/test_report.json not found!
+REPORT ./experiments/logs/node_classification/han/cfg_cg/node2vec/unchecked_low_level_calls/buggy_curated/test_report.json not found!
+[32m
+|                   |          | access_control   | arithmetic   | denial_of_service   | front_running   | reentrancy   | time_manipulation   | unchecked_low_level_calls   |
+|-------------------+----------+------------------+--------------+---------------------+-----------------+--------------+---------------------+-----------------------------|
+| base_metapath2vec | Buggy-F1 | 44.12%           | 65.84%       | 61.99%              | 78.74%          | 69.00%       | 67.26%              | 37.43%                      |
+| base_metapath2vec | Macro-F1 | 49.25%           | 49.71%       | 49.40%              | 49.93%          | 50.04%       | 49.77%              | 49.99%                      |
+| base_gae          | Buggy-F1 | 49.54%           | 66.74%       | 64.78%              | 77.97%          | 71.39%       | 67.80%              | 43.57%                      |
+| base_gae          | Macro-F1 | 55.33%           | 54.26%       | 55.82%              | 52.68%          | 52.95%       | 56.24%              | 55.24%                      |
+| base_line         | Buggy-F1 | 40.86%           | 68.45%       | 62.34%              | 82.99%          | 74.83%       | 71.09%              | 27.05%                      |
+| base_line         | Macro-F1 | 53.12%           | 47.29%       | 52.10%              | 43.76%          | 42.57%       | 45.82%              | 52.38%                      |
+| base_node2vec     | Buggy-F1 | 49.94%           | 66.70%       | 64.61%              | 78.56%          | 71.30%       | 67.48%              | 43.66%                      |
+| base_node2vec     | Macro-F1 | 55.65%           | 53.93%       | 55.44%              | 52.61%          | 53.10%       | 55.52%              | 55.66%                      |
+| nodetype          | Buggy-F1 | 90.43%           | 90.83%       | 87.32%              | 94.01%          | 92.55%       | 95.65%              | 92.84%                      |
+| nodetype          | Macro-F1 | 90.40%           | 89.01%       | 86.34%              | 87.91%          | 90.45%       | 94.65%              | 94.10%                      |
+| metapath2vec      | Buggy-F1 | 80.62%           | 83.99%       | 78.69%              | 90.34%          | 85.19%       | 90.33%              | 80.70%                      |
+| metapath2vec      | Macro-F1 | 82.61%           | 81.63%       | 77.36%              | 82.06%          | 81.37%       | 88.86%              | 85.30%                      |
+| gae               | Buggy-F1 | 89.56%           | 89.85%       | 84.65%              | 93.62%          | 90.97%       | 93.93%              | 90.86%                      |
+| gae               | Macro-F1 | 89.79%           | 87.81%       | 83.36%              | 87.34%          | 88.06%       | 92.76%              | 92.64%                      |
+| line              | Buggy-F1 | 0.00%            |              |                     |                 |              |                     |                             |
+| line              | Macro-F1 | 0.00%            |              |                     |                 |              |                     |                             |
+| node2vec          | Buggy-F1 | 0.00%            |              |                     |                 |              |                     |                             |
+| node2vec          | Macro-F1 | 0.00%            |              |                     |                 |              |                     |                             |
+[0m

@@ -205,6 +205,7 @@ class HeteroRGCN(nn.Module):
 class HGTVulNodeClassifier(nn.Module):
     def __init__(self, compressed_global_graph_path, feature_extractor=None, node_feature='han', hidden_size=128, num_layers=2,num_heads=8, use_norm=True, device='cpu'):
         super(HGTVulNodeClassifier, self).__init__()
+        print("HGTVulNodeClassifier")
         self.compressed_global_graph_path = compressed_global_graph_path
         self.hidden_size = hidden_size
         self.num_heads = num_heads

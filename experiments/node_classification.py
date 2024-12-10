@@ -4,7 +4,7 @@ import random
 import argparse
 from os.path import join
 from time import time
-
+from torch import nn
 import pickle
 import json
 import networkx as nx
@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from statistics import mean
 
 from sco_models.model_hgt import HGTVulNodeClassifier
+#from newMethods.model_test import TEST_MODEL1
 from sco_models.utils import get_classification_report
 from sco_models.graph_utils import reveert_map_node_embedding, load_hetero_nx_graph
 
@@ -121,6 +122,7 @@ def base_metapath2vec(compressed_graph, source_path, bugtype, device):
     embedding = torch.tensor(embedding, device=device) 
     assert len(nx_graph.nodes) == embedding.shape[0]
     number_of_nodes = embedding.shape[0]
+
     train, test = train_test_split(range(number_of_nodes), test_size=VAL_RATE)
     train_mask = get_binary_mask(number_of_nodes, train)
     test_mask = get_binary_mask(number_of_nodes, test)
@@ -143,6 +145,14 @@ def base_metapath2vec(compressed_graph, source_path, bugtype, device):
         train_loss.backward()
         optimizer.step()
     t1 = time()
+
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_metapath2vec/buggy_curated/'
+    if not os.path.exists(output_models):
+        os.makedirs(output_models)
+    save_path = os.path.join(output_models, f'model.pth')
+    torch.save(model.state_dict(), save_path)
+
+
     test_results = get_classification_report(targets[test_mask], logits[test_mask], output_dict=True)
     t2 = time()
     test_results['train_time'] = str(t1 - t0)
@@ -191,6 +201,15 @@ def base_gae(nx_graph, embedded, bugtype, device):
         train_loss.backward()
         optimizer.step()
     t1 = time()
+
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_gae/buggy_curated/'
+    if not os.path.exists(output_models):
+        os.makedirs(output_models)
+    save_path = os.path.join(output_models, f'model.pth')
+    torch.save(model.state_dict(), save_path)
+
+
+
     test_results = get_classification_report(targets[test_mask], logits[test_mask], output_dict=True)
     t2 = time()
     test_results['train_time'] = str(t1 - t0)
@@ -209,6 +228,8 @@ def base_line(nx_graph, embedded, bugtype, device):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_line/{bugtype}/buggy_curated/'
     if not os.path.exists(logs):
         os.makedirs(logs)
+   
+ 
     with open(embedded, 'rb') as f:
         embedding = pickle.load(f, encoding="utf8")
         embedding = torch.tensor(embedding, device=device)
@@ -236,6 +257,13 @@ def base_line(nx_graph, embedded, bugtype, device):
         train_loss.backward()
         optimizer.step()
     t1 = time()
+
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_line/buggy_curated/'
+    if not os.path.exists(output_models):
+        os.makedirs(output_models)
+    save_path = os.path.join(output_models, f'model.pth')
+    torch.save(model.state_dict(), save_path)
+
     test_results = get_classification_report(targets[test_mask], logits[test_mask], output_dict=True)
     t2 = time()
     test_results['train_time'] = str(t1 - t0)
@@ -254,6 +282,8 @@ def base_node2vec(nx_graph, embedded, bugtype, device):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_node2vec/{bugtype}/buggy_curated/'
     if not os.path.exists(logs):
         os.makedirs(logs)
+
+
     with open(embedded, 'rb') as f:
         embedding = pickle.load(f, encoding="utf8")
         embedding = torch.tensor(embedding, device=device)
@@ -268,6 +298,7 @@ def base_node2vec(nx_graph, embedded, bugtype, device):
     classifier = torch.nn.Linear(128, 2)
     classifier.to(device)
     classifier.train()
+
     targets, _, _ = get_node_label(nx_graph)
     targets = torch.tensor(targets, device=device)
     loss_fcn = torch.nn.CrossEntropyLoss()
@@ -281,6 +312,15 @@ def base_node2vec(nx_graph, embedded, bugtype, device):
         train_loss.backward()
         optimizer.step()
     t1 = time()
+
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/base_node2vec/buggy_curated/'
+    if not os.path.exists(output_models):
+        os.makedirs(output_models)
+    save_path = os.path.join(output_models, f'model.pth')
+    torch.save(model.state_dict(), save_path)
+
+
+
     test_results = get_classification_report(targets[test_mask], logits[test_mask], output_dict=True)
     t2 = time()
     test_results['train_time'] = str(t1 - t0)
@@ -311,33 +351,65 @@ def train(model, train_mask, targets, device):
     return model
 
 
-def nodetype(compressed_graph, source_code, dataset, bugtype, device):
+def nodetype(compressed_graph, source_code, dataset, bugtype, device, test_only=False):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/buggy_curated/'
+    test_logs = f'./newMethods/logs/'# f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/buggy_curated/test_logs/'
     if not os.path.exists(logs):
         os.makedirs(logs)
+    if not os.path.exists(test_logs):
+        os.makedirs(test_logs)
     output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/buggy_curated/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
-    if not os.path.exists(output_models):
-        os.makedirs(output_models)
+    
     feature_extractor = None
     node_feature = 'nodetype'
     model = HGTVulNodeClassifier(compressed_graph, feature_extractor=feature_extractor, 
                                  node_feature=node_feature, device=device)
-    train_mask, val_mask = dataset
+    train_mask, val_mask, verify_mask = dataset
     targets = torch.tensor(model.node_labels, device=device)
     model.to(device)
     model.reset_parameters()
     t0 = time()
-    model = train(model, train_mask, targets, device)
     save_path = os.path.join(output_models, f'han.pth')
-    torch.save(model.state_dict(), save_path)
+
+    if test_only == False:
+        logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/buggy_curated/' 
+        model = train(model, train_mask, targets, device)
+        torch.save(model.state_dict(), save_path)
+    else:
+        print("Testing........")
+        logs = f'./newMethods/logs/'#f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/buggy_curated/test_logs/' #testlogs
+        model.load_state_dict(torch.load(save_path, weights_only=True))
+        model.to(device)
+
     t1 = time()
     model.eval()
     with torch.no_grad():
         logits = model()
         logits = logits.to(device)
-        test_results = get_classification_report(targets[val_mask], logits[val_mask], output_dict=True)
+        test_results={}
+        if test_only == False:
+            #print(logits)
+            #print(logits[val_mask])
+
+            test_results = get_classification_report(targets[val_mask], logits[val_mask], output_dict=True)
+        else:
+            print(get_classification_report(targets[val_mask], logits[val_mask], output_dict=True))
+            print(targets[0])
+            print(logits[0])
+            print('Verify mask:', verify_mask)
+            print("Val mask:",logits[val_mask].shape)
+            print("Label shape:",targets[val_mask].shape)
+            logits = nn.functional.softmax(logits[val_mask], dim=1)
+            _, indices = torch.max(logits, dim=1)
+            prediction = indices.long().cpu().numpy()
+            #test_results['predictions'] = prediction.tolist()
+            print('Verify mask:', len(prediction.tolist()))
+
+            #print("Real val mask:", val_mask.shape)
+            #test_results = get_classification_report(targets[verify_mask], logits[verify_mask], output_dict=True)
+
     t2 = time()
     test_results['train_time'] = str(t1 - t0)
     test_results['test_time'] = str(t2 - t1)
@@ -355,7 +427,7 @@ def metapath2vec(compressed_graph, source_code, dataset, bugtype, device):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/metapath2vec/{bugtype}/buggy_curated/'
     if not os.path.exists(logs):
         os.makedirs(logs)
-    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/metapath2vec/buggy_curated/'
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/metapath2vec/{bugtype}/buggy_curated/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
     if not os.path.exists(output_models):
@@ -395,7 +467,7 @@ def gae(compressed_graph, source_code, dataset, feature_extractor, bugtype, devi
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/gae/{bugtype}/buggy_curated/'
     if not os.path.exists(logs):
         os.makedirs(logs)
-    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/gae/buggy_curated/'
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/gae/{bugtype}/buggy_curated/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
     if not os.path.exists(output_models):
@@ -431,15 +503,17 @@ def gae(compressed_graph, source_code, dataset, feature_extractor, bugtype, devi
         json.dump(report, f, indent=2)
 
 
-def line(compressed_graph, source_code, dataset, feature_extractor, bugtype, device):
+def line(compressed_graph, source_code, dataset, feature_extractor, bugtype, device,test_only=False):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/{bugtype}/buggy_curated/'
+    test_logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/{bugtype}/buggy_curated/test_logs/'
     if not os.path.exists(logs):
         os.makedirs(logs)
-    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/buggy_curated/'
+    if not os.path.exists(test_logs):
+        os.makedirs(test_logs)
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/{bugtype}/buggy_curated/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
-    if not os.path.exists(output_models):
-        os.makedirs(output_models)
+
     # feature_extractor = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_line_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_clean_{file_counter[bugtype]}_{DATA_ID}.pkl'
     node_feature = 'line'
     model = HGTVulNodeClassifier(compressed_graph, feature_extractor=feature_extractor, 
@@ -448,11 +522,21 @@ def line(compressed_graph, source_code, dataset, feature_extractor, bugtype, dev
     targets = torch.tensor(model.node_labels, device=device)
     model.to(device)
     model.reset_parameters()
-    t0 = time()
-    model = train(model, train_mask, targets, device)
+    
     save_path = os.path.join(output_models, f'han.pth')
-    torch.save(model.state_dict(), save_path)
-    t1 = time()
+    if test_only == False:
+        logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/{bugtype}/buggy_curated/' 
+        t0 = time()
+        model = train(model, train_mask, targets, device)
+        torch.save(model.state_dict(), save_path)
+        t1 = time()
+    else:
+        logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/line/{bugtype}/buggy_curated/test_logs/' #testlogs
+        t0 = time()
+        model.load_state_dict(torch.load(save_path, weights_only=True))
+        model.to(device)
+        t1 = time()
+
     model.eval()
     with torch.no_grad():
         logits = model()
@@ -471,15 +555,18 @@ def line(compressed_graph, source_code, dataset, feature_extractor, bugtype, dev
         json.dump(report, f, indent=2)
 
 
-def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype, device):
+def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype, device, test_only = False):
     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/{bugtype}/buggy_curated/'
+    test_logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/{bugtype}/buggy_curated/'
     if not os.path.exists(logs):
         os.makedirs(logs)
-    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/buggy_curated/'
+    if not os.path.exists(test_logs):
+        os.makedirs(test_logs)
+
+    output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/{bugtype}/buggy_curated/'
     if not os.path.exists(output_models):
         os.makedirs(output_models)
-    if not os.path.exists(output_models):
-        os.makedirs(output_models)
+
     # feature_extractor = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_clean_{file_counter[bugtype]}_{DATA_ID}.pkl'
     node_feature = 'node2vec'
     model = HGTVulNodeClassifier(compressed_graph, feature_extractor=feature_extractor, 
@@ -488,11 +575,19 @@ def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype,
     targets = torch.tensor(model.node_labels, device=device)
     model.to(device)
     model.reset_parameters()
-    t0 = time()
-    model = train(model, train_mask, targets, device)
+
     save_path = os.path.join(output_models, f'han.pth')
-    torch.save(model.state_dict(), save_path)
-    t1 = time()
+    if test_only == False:
+        logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/{bugtype}/buggy_curated/' 
+        t0 = time()
+        model = train(model, train_mask, targets, device)
+        torch.save(model.state_dict(), save_path)
+        t1 = time()
+    else:
+        logs = f'{ROOT}/testlogs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/node2vec/{bugtype}/buggy_curated/' #testlogs
+        model.load_state_dict(torch.load(save_path, weights_only=True))
+        model.to(device)
+    #TEST 
     model.eval()
     with torch.no_grad():
         logits = model()
@@ -509,6 +604,51 @@ def node2vec(compressed_graph, source_code, dataset, feature_extractor, bugtype,
         report = [test_results]
     with open(join(logs, 'test_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
+
+# def test_model1(compressed_graph, source_code, dataset, feature_extractor, bugtype, device):
+    
+#     logs = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/test_model1/{bugtype}/buggy_curated/'
+#     if not os.path.exists(logs):
+#         os.makedirs(logs)
+#     output_models = f'{ROOT}/models/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/test_model1/buggy_curated/'
+#     if not os.path.exists(output_models):
+#         os.makedirs(output_models)
+#     if not os.path.exists(output_models):
+#         os.makedirs(output_models)
+#     # feature_extractor = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_clean_{file_counter[bugtype]}_{DATA_ID}.pkl'
+#     node_feature = 'node2vec'
+#     model = TEST_MODEL1(compressed_graph, feature_extractor=feature_extractor, 
+#                                  node_feature=node_feature, device=device)
+#     train_mask, val_mask = dataset
+#     targets = torch.tensor(model.node_labels, device=device)
+#     model.to(device)
+#     model.reset_parameters()
+#     t0 = time()
+#     model = train(model, train_mask, targets, device)
+#     save_path = os.path.join(output_models, f'test_model1.pth')
+#     torch.save(model.state_dict(), save_path)
+#     t1 = time()
+#     model.eval()
+#     with torch.no_grad():
+#         logits = model()
+#         logits = logits.to(device)
+#         test_results = get_classification_report(targets[val_mask], logits[val_mask], output_dict=True)
+#     t2 = time()
+#     test_results['train_time'] = str(t1 - t0)
+#     test_results['test_time'] = str(t2 - t1)
+#     if os.path.isfile(join(logs, 'test_report.json')):
+#         with open(join(logs, 'test_report.json'), 'r') as f:
+#             report = json.load(f)
+#         report.append(test_results)
+#     else:
+#         report = [test_results]
+#     with open(join(logs, 'test_report.json'), 'w') as f:
+#         json.dump(report, f, indent=2)
+
+def full_test_execution(compressed_graph, source_code, dataset, line_embedded, gae_embedded, node2vec_embedded, bugtype, device):
+   nodetype(compressed_graph, source_code, dataset, bugtype, device, True)
+
+
 
 def print_info():
     '''
@@ -533,16 +673,21 @@ def print_info():
 
     print(f"###### MANDO-HGT: \n")
     print(f"{Fore.CYAN} [5] Run MandoHGT nodetype (Default). OK - slow{Style.RESET_ALL}")
-    print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. ERR {Style.RESET_ALL}")
+    print(f"{Fore.CYAN} [6] Run MandoHGT metapath2vec. OK - slow {Style.RESET_ALL}")
    # print(f"{Fore.CYAN} [7] Run MandoHGT gae. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [8] Run MandoHGT line. OK - slow{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [9] Run MandoHGT node2vec.  - slow{Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW} Modify the script to change paths and bug types.{Style.RESET_ALL}")
+
+    print(f"####### NEW MODEL: \n")
+    print(f"{Fore.CYAN} [10] Run xxxx {Style.RESET_ALL}")
+    print(f"####### FULL TEST: \n")
+    print(f"{Fore.CYAN} [ft] Run xxxx {Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
     #print(f"\n\n {Back.RED}!!! Warning: After run remember to copy the log/results cuz it might get deleted when u run the train once again.{Style.RESET_ALL}\n\n")
     
-    option_list = ['1', '2','3','4','5','6','7','8','9']
+    option_list = ['1', '2','3','4','5','6','7','8','9','10','ft']
     option = '4'
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
@@ -556,36 +701,58 @@ def main(device):
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
-            print(f'Train bugtype {bugtype} {i}-th/{REPEAT} reppeat ')
+            print(f'Processing bugtype {bugtype} {i}-th/{REPEAT} reppeat ')
             compressed_graph = f'{ROOT}/ge-sc-data/source_code/{bugtype}/buggy_curated/{COMPRESSED_GRAPH}_compressed_graphs.gpickle'
             nx_graph = nx.read_gpickle(compressed_graph)
             number_of_nodes = len(nx_graph)
             source_path = f'{ROOT}/ge-sc-data/source_code/{bugtype}/buggy_curated'
             testset = f'{ROOT}/ge-sc-data/source_code/{bugtype}/curated'
+            
+            #Verify set:
+            verify_set = f'./newMethods/sampleDataset'
+            verify_compressed_graph = f'./newMethods/sampleDataset/cfg_cg_compressed_graphs.gpickle'
+            verify_nx_graph = nx.read_gpickle(compressed_graph)
+            verify_number_of_nodes = len(verify_nx_graph)
+
+            #############################
 
             total_train_files = [f for f in os.listdir(source_path) if f.endswith('.sol')]
             total_test_files = [f for f in os.listdir(testset) if f.endswith('.sol')]
+
             total_train_files = list(set(total_train_files).difference(set(total_test_files)))
+
             rand_train_ids = torch.randperm(len(total_train_files)).tolist()
             rand_test_ids = torch.randperm(len(total_test_files)).tolist()
+
             train_size_0 = int(TRAIN_RATE * len(total_train_files))
             train_size_1 = int(TRAIN_RATE * len(total_test_files))
             train_files = [total_train_files[i] for i in rand_train_ids[:train_size_0]] + \
                         [total_test_files[i] for i in rand_test_ids[:train_size_1]]
+
             val_size_0 = len(total_train_files) - train_size_0
             val_size_1 = len(total_test_files) - train_size_1
             val_files = [total_train_files[i] for i in rand_train_ids[train_size_0:train_size_0 + val_size_0]] + \
                         [total_test_files[i] for i in rand_test_ids[train_size_1:train_size_1 + val_size_1]]
+
             assert len(train_files) + len(val_files) == len(total_train_files) + len(total_test_files)
+
             train_ids = get_node_ids(nx_graph, train_files)
             val_ids = get_node_ids(nx_graph, val_files)
             train_mask = get_binary_mask(number_of_nodes, train_ids)
             val_mask = get_binary_mask(number_of_nodes, val_ids)
+
+            #Verify set
+            verify_ids = get_node_ids(verify_nx_graph, verify_set)
+            verify_mask = get_binary_mask(verify_number_of_nodes, verify_ids)
+            #####################
             if hasattr(torch, 'BoolTensor'):
                 train_mask = train_mask.bool()
                 val_mask = val_mask.bool()
-            dataset = (train_mask, val_mask)
-            
+                if verify_mask is not None:
+                    verify_mask = verify_mask.bool()
+            dataset = (train_mask, val_mask, verify_mask)
+
+
             gae_embedded = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_gae_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_buggy_curated.pkl'
             line_embedded = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_line_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_buggy_curated.pkl'
             node2vec_embedded = f'{ROOT}/ge-sc-data/source_code/gesc_matrices_node_embedding/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_buggy_curated.pkl'
@@ -607,9 +774,14 @@ def main(device):
             elif (option == '7'):
                 gae(compressed_graph, source_path, dataset, gae_embedded, bugtype, device)
             elif (option == '8'):
-                line(compressed_graph, source_path,  dataset, line_embedded, bugtype, device)
+                line(compressed_graph, source_path,  dataset, line_embedded, bugtype, device,True)
             elif (option == '9'):
                 node2vec(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
+            elif (option == '10'):
+                print("not implemented")
+               # test_model1(compressed_graph, source_path, dataset, line_embedded, bugtype, device)
+            elif (option == 'ft'):
+                full_test_execution(compressed_graph , source_path, dataset, line_embedded, gae_embedded, node2vec_embedded , bugtype, device)
             else:
                 print("Invalid option!")
                 sys.exit(1)
@@ -643,12 +815,59 @@ def get_results():
     for bugtype in bug_list:
         for model in models:
             report_path = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/buggy_curated/test_report.json'
-            
             if not os.path.exists(report_path):
                 print(f'REPORT {report_path} not found!')
                 continue
             try:
                 buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+              #  print(f'{Fore.GREEN}REPORT {report_path} found!{Style.RESET_ALL}')
+            except:
+                buggy_f1, macro_f1 = 0.0, 0.0
+            # buggy_f1, macro_f1 = get_max_results(report_path)
+            if model not in buggy_f1_report:
+                buggy_f1_report[model] = [buggy_f1]
+                macro_f1_report[model] = [macro_f1]
+            else:
+                buggy_f1_report[model].append(buggy_f1)
+                macro_f1_report[model].append(macro_f1)
+    data = []
+    for model in models:
+        # print(' ', end=' ')
+        # print(' \t'.join(['%.2f'%n for n in buggy_f1_report[model]]), end=r'')
+        # print()
+        # print(' ', end=' ')
+        # print(' \t'.join(['%.2f'%n for n in macro_f1_report[model]]), end=r'')
+        # print()
+        buggy_f1_row = []
+        macro_f1_row = []
+        if model not in buggy_f1_report:
+            continue
+        for i in range(len(buggy_f1_report[model])):
+            buggy_f1 = buggy_f1_report[model][i]
+            macro_f1 = macro_f1_report[model][i]
+            buggy_f1_row.append('%.2f'%buggy_f1 + '%' if isinstance(buggy_f1, float) else buggy_f1)
+            macro_f1_row.append('%.2f'%macro_f1 + '%' if isinstance(macro_f1, float) else macro_f1)
+        data.append([model, 'Buggy-F1'] + buggy_f1_row)
+        data.append([model, 'Macro-F1'] + macro_f1_row)
+    print(f"{Fore.GREEN}")
+    print(tabulate(data, headers=bug_list, tablefmt='orgtbl'))
+    print(f"{Style.RESET_ALL}")
+
+
+
+def get_test_results():
+    buggy_f1_report = {}
+    macro_f1_report = {}
+    models = ['nodetype', 'metapath2vec', 'gae', 'line', 'node2vec']
+    for bugtype in bug_list:
+        for model in models:
+            report_path = f'{ROOT}/logs/{TASK}/{STRUCTURE}/{COMPRESSED_GRAPH}/{model}/{bugtype}/buggy_curated/test_logs/test_report.json'
+            if not os.path.exists(report_path):
+                #print(f'REPORT {report_path} not found!')
+                continue
+            try:
+                buggy_f1, macro_f1 = get_avg_results(report_path, top_rate=0.5)
+              #  print(f'{Fore.GREEN}REPORT {report_path} found!{Style.RESET_ALL}')
             except:
                 buggy_f1, macro_f1 = 0.0, 0.0
             # buggy_f1, macro_f1 = get_max_results(report_path)
@@ -725,7 +944,10 @@ def get_runtime_result():
 if __name__ == '__main__':
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     if args['result']:
+        print('\n TRAIN RESULTS \n')
         get_results()
+        print('\n\n\n TEST RESULT \n\n\n')
+        get_test_results()
     else:
         print(device)
         main(device)

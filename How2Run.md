@@ -7,7 +7,9 @@
 
 Service: `mando-hgt-rebuild`
 
-## Dir tree
+## Directories tree
+
+Some folders may not exist on repo, this is expected.
 
 ```
 .
@@ -16,23 +18,25 @@ Service: `mando-hgt-rebuild`
 |
 +---- data (Nothing)
 |
-+---- experiments (VERY IMPORTANT) | DO NOT overwrite the 2 python scripts | the other folder can be copy from Old MANDO
++---- experiments (VERY IMPORTANT)
 |        |
 |        |
-|        +---- ge-sc-data (DATASET), OVERWRITE THIS from OLd MANDO |
+|        +---- ge-sc-data (DATASET), OVERWRITE THIS from Old MANDO |
 |        |
 |        +---- models (Auto Generated)
-|        +---- logs (Auto Generated)
+|        +---- logs (Auto Generated) -- main result are here
 |        |
-|        +---- node_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|        +---- node_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS -- main running
 |        |
-|        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS
+|        +---- graph_classification.py (VERY IMPORTANT) | DO NOT OVERWRITE THIS -- main running
+|
+|
+|
 |
 |
 +---- forensics (Nothing)
 |
-+---- Mando (Contains the Mando, may not need to put it in, this is for ease of access to the old script to test it)
-|
++---- Mando (Contains the Old Mando, may not need to put it in, this is for ease of access to the old script to test it)
 |
 +---- ge-sc-data (Contains the Dataset repo below) | Extract from zip maybe?
 |        |
@@ -40,6 +44,7 @@ Service: `mando-hgt-rebuild`
 |        +---- node_classification
 |        +---- others
 |        \
+|
 |
 +---- models (Auto Generated)
 |
@@ -51,10 +56,20 @@ Service: `mando-hgt-rebuild`
 |
 +---- logs (Auto Generated)
 |
+|
+|
++---- cm.sh interesting command to use the graph_classifier.py and node_classifier.py, missing some gpickle files to run tho.
+|
 +---- How2Run.md
 |
++---- graph_classifier.py ( Maybe custom train)
 |
-+---- note.txt (Drawbacks or interesting stuff in paper) 
++---- node_classifier.py ( Maybe custom train)
+|
++---- note.txt (Drawbacks or interesting stuff in paper)
+|
++---- visualize.py (For visualize dataset for now)
+|
 |
 \
 
@@ -65,6 +80,8 @@ Service: `mando-hgt-rebuild`
 ## Required dependencies
 
 ### Repositories:
+
+Follow above Dir tree to install and setup
 
 #### Old MANDO:
 
@@ -82,17 +99,11 @@ Service: `mando-hgt-rebuild`
 
 ## Build docker
 
-To using docker
+To using docker (RECOMMENDED)
 
 `docker compose up` ( --build : to rebuild the docker with latest changes)
 
 `docker exec -ti <container name/id> /bin/bash`
-
-Or
-
-`docker build -t <image name/id> .`
-
-`docker run -itv .:/app/mando-hgt <image name/id>`
 
 More information refer to the Docker documentation:
 `https://docs.docker.com/compose/`
@@ -105,17 +116,24 @@ More information refer to the Docker documentation:
 
 ### Processing data to graphs phase
 
-1. `python process_graphs/call_graph_generator.py`
-2. `python process_graphs/control_flow_graph_generator.py`
-3. `python process_graphs/combination_call_graph_and_control_flow_graph_helper.py`
-4. `python process_graphs/byte_code_control_flow_graph_generator.py`
-   - This is for the baseline models
+Please read the displayed Info when running the script.
+
+
+
+1. CFG: `python process_graphs/control_flow_graph_generator.py`
+
+2. CG: `python process_graphs/call_graph_generator.py`
+
+3. CG_CFG: `python process_graphs/combination_call_graph_and_control_flow_graph_helper.py`
+
+4. compressed GPICKLES: `python process_graphs/byte_code_control_flow_graph_generator.py`
+   - This is for the baseline models, please follow the number order
 
 ---
 
 ### Training the baselines models phase
 
-#### Graph Classification
+#### Graph Classification (Coarse-grained - contract level)
 
 Training Phase
 
@@ -131,7 +149,7 @@ python -m experiments.graph_classification --result
 
 ---
 
-#### Node Classification
+#### Node Classification (Fine-grained - line level)
 
 Training Phase
 
@@ -148,6 +166,8 @@ python -m experiments.node_classification --result
 ---
 
 # ------ IGNORE BELOW ------
+
+---
 
 # Methods
 

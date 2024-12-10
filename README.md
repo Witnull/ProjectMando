@@ -42,6 +42,8 @@ Nguyen, H. H., Nguyen, N.M., Xie, C., Ahmadi, Z., Kudenko, D., Doan, T. N., & Ji
 }
 ```
 
+# Rebuild Refer here [How 2 run](How2Run.md)
+
 # Table of contents
 
 - [MANDO-HGT](#mando-hgt)

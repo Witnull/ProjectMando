@@ -406,11 +406,15 @@ def print_info():
     print("3. Ensure vulnerability JSON files are in the correct locations.")
     print(f"\n{Fore.YELLOW}No command-line arguments are required. Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
-
+    print(f"\n [1] Generates original")
+    print(f"\n [2] Generates from new")
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
 
-    input(f"{Back.BLUE}Press Enter to start generating control flow graphs...{Style.RESET_ALL}")
-
+    o = input(f"{Back.BLUE}Press 1 OR 2 to start generating control flow graphs...{Style.RESET_ALL}")
+    if o not in ['1','2']:
+        print(f"{Back.RED}Invalid input! Exiting...{Style.RESET_ALL}")
+        sys.exit(1)
+    return o
 
 
 
@@ -436,28 +440,34 @@ if __name__ == '__main__':
     bug_type = {'access_control': 57, 'arithmetic': 60, 'denial_of_service': 46,
               'front_running': 44, 'reentrancy': 71, 'time_manipulation': 50, 
               'unchecked_low_level_calls': 95}
-    print_info()
-    print(f"{Back.CYAN}ROOT: {ROOT}{Style.RESET_ALL}")
-    print(f"{Back.CYAN}Starting control flow graph generation...{Style.RESET_ALL}")
-    for bug, counter in bug_type.items():
-        # source = f'{ROOT}/{bug}/buggy_curated'
-        # output = f'{ROOT}/{bug}/buggy_curated/cfg_compressed_graphs.gpickle'
-        print(f"{Fore.CYAN}Processing bug type: {bug}{Style.RESET_ALL}")
-        #############################  
-        # Change here!
-        source = f'{ROOT}/{bug}/curated'
-        specific_name = "" # Leave empty for default
-        output_CFG_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_compressed_graphs.gpickle'
-        print(f"{Back.CYAN}OUTPUT: {output_CFG_path}{Style.RESET_ALL}")
-        #############################
+    option = print_info()
+    if option =='1':
+        print(f"{Back.CYAN}ROOT: {ROOT}{Style.RESET_ALL}")
+        print(f"{Back.CYAN}Starting control flow graph generation...{Style.RESET_ALL}")
+        for bug, counter in bug_type.items():
+            # source = f'{ROOT}/{bug}/buggy_curated'
+            # output = f'{ROOT}/{bug}/buggy_curated/cfg_compressed_graphs.gpickle'
+            print(f"{Fore.CYAN}Processing bug type: {bug}{Style.RESET_ALL}")
+            #############################  
+            # Change here!
+            source = f'{ROOT}/{bug}/curated'
+            specific_name = "" # Leave empty for default
+            output_CFG_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_compressed_graphs.gpickle'
+            print(f"{Back.CYAN}OUTPUT: {output_CFG_path}{Style.RESET_ALL}")
+            #############################
 
-        auto_generate_dirs(output_CFG_path)
-        smart_contracts = [join(source, f) for f in os.listdir(source) if f.endswith('.sol')]
-        data_vulnerabilities = None
-        list_vulnerabilities_json_files = ['data/solidifi_buggy_contracts/reentrancy/vulnerabilities.json',
-        # 'data/solidifi_buggy_contracts/access_control/vulnerabilities.json',
-        'data/smartbug-dataset/vulnerabilities.json']
-        data_vulnerabilities = merge_data_from_vulnerabilities_json_files(list_vulnerabilities_json_files)
-        compress_full_smart_contracts(smart_contracts, None, output_CFG_path, vulnerabilities=data_vulnerabilities)
-
+            auto_generate_dirs(output_CFG_path)
+            smart_contracts = [join(source, f) for f in os.listdir(source) if f.endswith('.sol')]
+            data_vulnerabilities = None
+            list_vulnerabilities_json_files = ['data/solidifi_buggy_contracts/reentrancy/vulnerabilities.json',
+            # 'data/solidifi_buggy_contracts/access_control/vulnerabilities.json',
+            'data/smartbug-dataset/vulnerabilities.json']
+            data_vulnerabilities = merge_data_from_vulnerabilities_json_files(list_vulnerabilities_json_files)
+            compress_full_smart_contracts(smart_contracts, None, output_CFG_path, vulnerabilities=data_vulnerabilities)
+    elif option == '2':
+        output_CFG_path = f'./newMethods/sampleDataset/cfg_compressed_graphs.gpickle'
+        source = f'./newMethods/sampleDataset/'
+        n = 10  # Replace with the number of contracts you want
+        smart_contracts = [join(source, f) for f in os.listdir(source) if f.endswith('.sol')]#[:n]
+        compress_full_smart_contracts(smart_contracts, None, output_CFG_path, vulnerabilities=None)
     print(f"{Back.GREEN}Control flow graph generation completed!{Style.RESET_ALL}")

@@ -365,7 +365,7 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device):
     model.to(device)
     X_train, X_val, y_train, y_val = dataset
 
-    #print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
+    print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
 
     model = train(model, X_train, y_train, device)
 

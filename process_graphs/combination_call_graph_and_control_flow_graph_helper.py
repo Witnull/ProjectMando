@@ -96,9 +96,13 @@ def print_info():
     print("- Generates combined CFG-CG graphs for each bug type")
     print("- Saves the results in the specified output directories")
     print(f"\n{Fore.YELLOW}No command-line arguments are required. Modify the script to change paths and bug types.{Style.RESET_ALL}")
-
-    input(f"{Back.BLUE}Press Enter to start...{Style.RESET_ALL}")
-
+    print(f"\n [1] Generates original")
+    print(f"\n [2] Generates from new")
+    o = input(f"{Back.BLUE}Press 1 OR 2 to start...{Style.RESET_ALL}")
+    if o not in ['1','2']:
+        print(f"{Back.RED}Invalid input! Exiting...{Style.RESET_ALL}")
+        sys.exit(1)
+    return o
 if __name__ == '__main__':
     # input_cfg_path = 'data/clean_57_buggy_curated_0_access_control/cfg_compress_graphs.gpickle'
     # input_call_graph_path = 'data/clean_57_buggy_curated_0_access_control/compress_call_graphs_no_solidity_calls_buggy.gpickle'
@@ -132,35 +136,52 @@ if __name__ == '__main__':
               'front_running': 44, 'reentrancy': 71, 'time_manipulation': 50, 
               'unchecked_low_level_calls': 95}
     
-    print_info()
-    print(f"{Back.CYAN} ROOT: {ROOT}{Style.RESET_ALL}")
-    print(f"{Back.CYAN}Starting to process combine...{Style.RESET_ALL}")
+    option = print_info()
+    if option == '1':
+        print(f"{Back.CYAN} ROOT: {ROOT}{Style.RESET_ALL}")
+        print(f"{Back.CYAN}Starting to process combine...{Style.RESET_ALL}")
 
-    for bug, counter in bug_type.items():
-        print(f"{Back.CYAN}Starting to process {str(bug)}bug...{Style.RESET_ALL}")
-        #############################  
-        # Change here!
-        source = f'{ROOT}/{bug}/curated'
-        specific_name = "" # Leave empty for default
-        output_CFGxCG_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_cg_compressed_graphs.gpickle'
+        for bug, counter in bug_type.items():
+            print(f"{Back.CYAN}Starting to process {str(bug)}bug...{Style.RESET_ALL}")
+            #############################  
+            # Change here!
+            source = f'{ROOT}/{bug}/curated'
+            specific_name = "" # Leave empty for default
+            output_CFGxCG_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_cg_compressed_graphs.gpickle'
+            
+            input_cfg_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_compressed_graphs.gpickle'
+            input_call_graph_path = f'{ROOT}/{specific_name}{bug}/curated/cg_compressed_graphs.gpickle'
+
+            print(f"{Back.CYAN}OUTPUT: {output_CFGxCG_path}{Style.RESET_ALL}")
+            print(f"{Back.CYAN}INPUT CFG: {input_cfg_path}{Style.RESET_ALL}")
+            print(f"{Back.CYAN}INPUT CG: {input_call_graph_path}{Style.RESET_ALL}")
+            #############################  
+            input_cfg = nx.read_gpickle(input_cfg_path)
+            input_call_graph = nx.read_gpickle(input_call_graph_path)
+            dict_node_label_cfg_and_cg = mapping_cfg_and_cg_node_labels(input_cfg, input_call_graph)
+            merged_graph = add_new_cfg_edges_from_call_graph(input_cfg, dict_node_label_cfg_and_cg, input_call_graph)
         
-        input_cfg_path = f'{ROOT}/{specific_name}{bug}/curated/cfg_compressed_graphs.gpickle'
-        input_call_graph_path = f'{ROOT}/{specific_name}{bug}/curated/cg_compressed_graphs.gpickle'
+            # output_CFGxCG_path = f'/home/minhnn/minhnn/ICSE/ge-sc/experiments/ge-sc-data/source_code/compressed_graphs/buggy_curated/{bug}_cfg_cg_compressed_graphs.gpickle'
+            update_cfg_node_types_by_call_graph_node_types(merged_graph, dict_node_label_cfg_and_cg)
+            nx.write_gpickle(merged_graph, output_CFGxCG_path)
+            print(f"{Fore.GREEN}Dumped succesfully: {output_CFGxCG_path}{Style.RESET_ALL}")
+    elif option == '2':
+        source = f'./newMethods/sampleDataset/'
+        output_CFGxCG_path = f'{source}cfg_cg_compressed_graphs.gpickle'
+            
+        input_cfg_path = f'{source}/cfg_compressed_graphs.gpickle'
+        input_call_graph_path = f'{source}/cg_compressed_graphs.gpickle'
 
-        print(f"{Back.CYAN}OUTPUT: {output_CFGxCG_path}{Style.RESET_ALL}")
-        print(f"{Back.CYAN}INPUT CFG: {input_cfg_path}{Style.RESET_ALL}")
-        print(f"{Back.CYAN}INPUT CG: {input_call_graph_path}{Style.RESET_ALL}")
-        #############################  
+        
         input_cfg = nx.read_gpickle(input_cfg_path)
         input_call_graph = nx.read_gpickle(input_call_graph_path)
+        
         dict_node_label_cfg_and_cg = mapping_cfg_and_cg_node_labels(input_cfg, input_call_graph)
         merged_graph = add_new_cfg_edges_from_call_graph(input_cfg, dict_node_label_cfg_and_cg, input_call_graph)
-       
+    
         # output_CFGxCG_path = f'/home/minhnn/minhnn/ICSE/ge-sc/experiments/ge-sc-data/source_code/compressed_graphs/buggy_curated/{bug}_cfg_cg_compressed_graphs.gpickle'
         update_cfg_node_types_by_call_graph_node_types(merged_graph, dict_node_label_cfg_and_cg)
         nx.write_gpickle(merged_graph, output_CFGxCG_path)
-        print(f"{Fore.GREEN}Dumped succesfully: {output_CFGxCG_path}{Style.RESET_ALL}")
-
     print(f"{Back.GREEN}Process completed!{Style.RESET_ALL}")
     # # Combine all the graphs
     # multi_graphs = [nx.read_gpickle(f'{ROOT}/{bug}/buggy_curated/cfg_cg_compressed_graphs.gpickle') for bug in bug_type.keys()]
