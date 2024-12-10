@@ -15,6 +15,7 @@ from statistics import mean
 
 from sco_models.model_hgt import HGTVulNodeClassifier
 #from newMethods.model_test import TEST_MODEL1
+#from newMethods.model_test import TEST_MODEL1
 from sco_models.utils import get_classification_report
 from sco_models.graph_utils import reveert_map_node_embedding, load_hetero_nx_graph
 
