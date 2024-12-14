@@ -432,7 +432,39 @@ def print_info():
         logging.basicConfig(level=logging.INFO)
     return option
 
+def extract_contract_data(directory):
+    contract_data = {}
 
+    # Iterate through all .sol files in the directory
+    for file_name in os.listdir(directory):
+        if file_name.endswith('.sol'):
+            file_path = os.path.join(directory, file_name)
+            with open(file_path, 'r') as f:
+                lines = f.readlines()
+            
+            # Process the file
+            file_contracts = {}
+            current_contract = None
+            start_line = None
+            
+            for i, line in enumerate(lines, start=1):
+                line = line.strip()
+                if line.startswith("contract "):  # Detect start of a contract
+                    if current_contract:  # Close the previous contract
+                        file_contracts[current_contract] = {"start": start_line, "end": i - 1}
+                    
+                    # Extract contract name
+                    current_contract = line.split()[1].split('{')[0]
+                    start_line = i
+            
+            # Handle the last contract in the file
+            if current_contract:
+                file_contracts[current_contract] = {"start": start_line, "end": len(lines)}
+            
+            # Save results for this file
+            contract_data[file_name] = file_contracts
+    
+    return contract_data
 
 if __name__ == '__main__':
     bug_type = {'access_control': 57, 'arithmetic': 60, 'denial_of_service': 46,
@@ -446,6 +478,8 @@ if __name__ == '__main__':
     if option == 'x':
         SOURCE_DATA = './newMethods/sampleDataset'
         CRYTIC_EVM_OUT= f'{SOURCE_DATA}/crytic_evm'
+        ANNOTATION_DATA = f'{SOURCE_DATA}/annotation.json'
+        SC_CAT = f'{SOURCE_DATA}/sc_cat.json'
 
         CREATION_OUT = f'{SOURCE_DATA}/creation'
         CREATION_OUT_EVM = f'{CREATION_OUT}/evm'
@@ -472,6 +506,29 @@ if __name__ == '__main__':
         os.makedirs(RUNTIME_OUT_GPICKLES, exist_ok=True)
         os.makedirs(RUNTIME_OUT_GPICKLES_COMPRESSED, exist_ok=True)
 
+
+        contract_data = extract_contract_data(SOURCE_DATA)
+        with open(SC_CAT, 'w') as json_file:
+            json.dump(contract_data, json_file, indent=4)
+
+        # Assuming SOURCE_DATA and ANNOTATION_DATA are defined
+        annotation = []
+
+        ## Iterate over each file and its contracts
+        for file_name, contracts in contract_data.items():
+            base_name = file_name.replace('.sol', '')  # Strip .sol extension
+            for contract_name in contracts.keys():
+                # Construct annotation for each contract
+                annotation.append({
+                    "contract_name": f"{base_name}-{contract_name}.sol",
+                    "targets": 1  # Ignored as per request but set default for consistency
+                })
+
+        # Write to JSON file
+        with open(ANNOTATION_DATA, 'w') as f:
+            json.dump(annotation, f, indent=4)
+        
+
         # print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
         # # Generate crytic evm files
         # generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
@@ -480,40 +537,36 @@ if __name__ == '__main__':
         # generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
 
         # generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
-        # generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')     
-        print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
-        creation_graph_path = CREATION_OUT_GRAPH
-        runtime_graph_path = RUNTIME_OUT_GRAPH
-        creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
-        runtime_dot_files = [f for f in os.listdir(runtime_graph_path) if f.endswith('.dot')]
-        creation_gpickle_output = CREATION_OUT_GPICKLES
-        runtime_gpickle_output = RUNTIME_OUT_GPICKLES
+        # generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')  
 
+        # print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
+        # creation_dot_files = [f for f in os.listdir(CREATION_OUT_GRAPH) if f.endswith('.dot')]
+        # runtime_dot_files = [f for f in os.listdir(RUNTIME_OUT_GRAPH) if f.endswith('.dot')]
 
-        for dot in creation_dot_files:
-            dot2gpickle(join(creation_graph_path, dot), join(creation_gpickle_output, dot.replace('.dot', '.gpickle')))
-        for dot in runtime_dot_files:
-            dot2gpickle(join(runtime_graph_path, dot), join(runtime_gpickle_output, dot.replace('.dot', '.gpickle')))
+        # for dot in creation_dot_files:
+        #     dot2gpickle(join(CREATION_OUT_GRAPH, dot), join(CREATION_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
+        # for dot in runtime_dot_files:
+        #     dot2gpickle(join(RUNTIME_OUT_GRAPH, dot), join(RUNTIME_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
         
-        print(f'{Fore.CYAN} [INFO] Merging .gpickle {Style.RESET_ALL}')
+        # print(f'{Fore.CYAN} [INFO] Merging .gpickle {Style.RESET_ALL}')
 
-        creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
-        creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
+        # x_creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
+        # x_creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
 
        
-        runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
-        runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
+        # x_runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
+        # x_runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
 
-        merge_byte_code_cfg(CREATION_OUT_GPICKLES, creation_gpickle_files, creation_balanced_compressed_graph)
-        merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, runtime_gpickle_files, runtime_balanced_compressed_graph)
+        # merge_byte_code_cfg(CREATION_OUT_GPICKLES, x_creation_gpickle_files, x_creation_balanced_compressed_graph)
+        # merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, x_runtime_gpickle_files, x_runtime_balanced_compressed_graph)
 
-        output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
-        output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
+        # output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
+        # output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
 
-        copy(creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
-        copy(runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+        # copy(x_creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
+        # copy(x_runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
 
-        print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        # print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
         sys.exit(0)
 
     if option == '1':
