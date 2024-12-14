@@ -590,7 +590,7 @@ if __name__ == '__main__':
 
     if option == '3b':
         # Convert dot to gpickle
-        for bug, counter in bug_type.items():
+        for bug, counter in tqdm(bug_type.items()):
             creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
             runtime_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
             creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
