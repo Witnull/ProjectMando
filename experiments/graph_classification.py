@@ -348,6 +348,28 @@ def base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device):
         json.dump(report, f, indent=2)
 
 
+def pad_or_trim_weights(checkpoint_dict, model_dict):
+    updated_dict = {}
+    for key, param in checkpoint_dict.items():
+        if key in model_dict:
+            model_param = model_dict[key]
+            if param.shape != model_param.shape:
+                print(f"Adjusting layer {key}: {param.shape} -> {model_param.shape}")
+                # Pad or trim dimensions to match the model
+                param = match_dimensions(param, model_param)
+        updated_dict[key] = param
+    return updated_dict
+
+def match_dimensions(param, target_param):
+    """Adjusts the dimensions of the param tensor to match target_param."""
+    # Create a new tensor with the desired size
+    new_param = torch.zeros_like(target_param)
+    # Determine slicing or filling indices
+    slices = tuple(slice(0, min(p, t)) for p, t in zip(param.shape, target_param.shape))
+    new_param[slices] = param[slices]
+    return new_param
+
+
 def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_only=False,verify_set=None):
     logs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
     testlogs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
@@ -373,9 +395,18 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
         print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
         model = train(model, X_train, y_train, device)
     else:
-        print(f"Verify set:{verify_set}\n\n")
-        print(f"X_val:{X_val}\n\n")
-        model.load_state_dict(torch.load(join(output_models, f'hgt.pth'),weights_only=True))
+        #print(f"Verify set:{verify_set}\n\n")
+        #print(f"X_val:{X_val}\n\n")
+        checkpoint = torch.load(join(output_models, f'hgt.pth'),weights_only=True)
+        checkpoint_state_dict = checkpoint
+        #print(checkpoint)
+        model_state_dict = model.state_dict()
+
+        # Adjust the checkpoint state_dict
+        adjusted_state_dict = pad_or_trim_weights(checkpoint_state_dict, model_state_dict)
+
+        # Load the modified state_dict
+        model.load_state_dict(adjusted_state_dict)
 
     save_path = os.path.join(output_models, f'hgt.pth')
     torch.save(model.state_dict(), save_path)
@@ -693,6 +724,7 @@ def main(device):
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
             print(compressed_graph)
             nx_graph = nx.read_gpickle(compressed_graph)
+            #print(nx_graph)
             file_name_dict = get_node_id_by_file_name(nx_graph)
             # label = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/graph_labels.json'
             label = f'{ROOT}/ge-sc-data/byte_code/smartbugs/contract_labels/{bugtype}/{BYTECODE}_balanced_contract_labels.json'
@@ -705,11 +737,15 @@ def main(device):
 
 
             # ###VERIFY SET 
-            # verify_compressed_graph = f'./newMethods/sampleDataset/bytecode_compressed_graphs.gpickle'
-            # verify_nx_graph = nx.read_gpickle(compressed_graph)
-            # verify_file_name_dict = get_node_id_by_file_name(nx_graph)
-            # total_verify_files = tuple([f for f in os.listdir(f'./newMethods/sampleDataset') if f.endswith('.sol')])
-            # print(total_verify_files)
+            with open("./newMethods/sampleDataset/annotation.json", 'r') as f:
+                vannotations = json.load(f)
+            verify_compressed_graph = f'./newMethods/sampleDataset/{BYTECODE}/gpickles/compressed_graphs/{BYTECODE}_balanced_cfg_compressed_graphs.gpickle'
+            verify_nx_graph = nx.read_gpickle(compressed_graph)
+            print(verify_compressed_graph)
+            #print(verify_nx_graph)
+            verify_file_name_dict = get_node_id_by_file_name(nx_graph)
+            total_verify_files = tuple([vanno['contract_name'] for vanno in vannotations])
+            #print(total_verify_files)
             
             
             
@@ -757,7 +793,7 @@ def main(device):
             elif(option == '8'):
                 node2vec(compressed_graph, dataset, node2vec_embedded, bugtype, device)
             elif option == 'ft':
-                full_test_execution(compressed_graph, dataset, total_verify_files , line_embedded, node2vec_embedded, bugtype)
+                full_test_execution(verify_compressed_graph, dataset, total_verify_files , line_embedded, node2vec_embedded, bugtype)
             else:   
                 print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
                 sys.exit(1)

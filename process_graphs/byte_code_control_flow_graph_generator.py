@@ -717,4 +717,3 @@ if __name__ == '__main__':
     #             content = json.load(f)
     #         new_annotation = [{'contract_name': contract['contract_name'].replace('.sol', '.gpickle'), 'targets':  contract['targets']} for contract in content]
     #         with open(join(annotation_path, annotation), 'w') as f:
-    #             json.dump(new_annotation, f, indent=4)
