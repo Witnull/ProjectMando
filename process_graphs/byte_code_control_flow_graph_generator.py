@@ -15,7 +15,6 @@ import networkx as nx
 from tqdm import tqdm
 from slither.slither import Slither
 import logging
-
 import colorama
 from colorama import Fore, Style, Back
 # Initialize colorama for Windows compatibility
@@ -413,23 +412,18 @@ def print_info():
     print(f"{Fore.CYAN} [3b] Convert .dot to .gpickle {Style.RESET_ALL}")
     print(f"{Fore.CYAN} [4] Create balanced dataset.{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [5] Merge .gpickles files into {Fore.YELLOW}compressred_graph.gpickle {Fore.CYAN} file.{Style.RESET_ALL}")
-
+    print(f"{Fore.CYAN} [ft] Make a test dataset {Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}Note: Might need to unzip the file experiments/ge-sc-data/smartbugs-wild-2742-clean-contracts.zip to experiments/ge-sc-data/smartbugs-wild-clean-contracts  {Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}No command-line arguments are required. Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
-    option_list = ['1', '2a', '2b', '3','3b','4','5','x']
+    option_list = ['1', '2a', '2b', '3','3b','4','5','ft']
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
         print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
         sys.exit(1)
-    verbose = input("Verbose? (Y/n) | Default Y: ")
-    if verbose.lower() == 'n':
-        print(f"{Fore.CYAN} [INFO] Logging disabled...{Style.RESET_ALL}")
-        logging.disable(logging.CRITICAL)
-    else:
-        logging.basicConfig(level=logging.INFO)
+    
     return option
 
 def extract_contract_data(directory):
@@ -471,11 +465,13 @@ if __name__ == '__main__':
               'front_running': 44, 'reentrancy': 71, 'time_manipulation': 50, 
               'unchecked_low_level_calls': 95}
     option = print_info()
+
     # # Forencis gpickle graph
     # source_compressed_graph = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_compressed_graphs.gpickle'
     # # forencis_gpickle(source_compressed_graph)
     # forencis_gpickle(source_compressed_graph)
-    if option == 'x':
+
+    if option == 'ft':
         SOURCE_DATA = './newMethods/sampleDataset'
         CRYTIC_EVM_OUT= f'{SOURCE_DATA}/crytic_evm'
         ANNOTATION_DATA = f'{SOURCE_DATA}/annotation.json'
@@ -511,67 +507,84 @@ if __name__ == '__main__':
         with open(SC_CAT, 'w') as json_file:
             json.dump(contract_data, json_file, indent=4)
 
+        print(f'{Fore.CYAN} [INFO] Generating cryptic evm files... {Style.RESET_ALL}')
+        # Generate crytic evm files
+        generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
+
+        print(f'{Fore.CYAN} [INFO] Generating creation and runtime files... {Style.RESET_ALL}')
+        generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
+
+        generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
+        generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')  
+
+        print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
+        creation_dot_files = [f for f in os.listdir(CREATION_OUT_GRAPH) if f.endswith('.dot')]
+        runtime_dot_files = [f for f in os.listdir(RUNTIME_OUT_GRAPH) if f.endswith('.dot')]
+        
+        for dot in creation_dot_files:
+            dot2gpickle(join(CREATION_OUT_GRAPH, dot), join(CREATION_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
+        for dot in runtime_dot_files:
+            dot2gpickle(join(RUNTIME_OUT_GRAPH, dot), join(RUNTIME_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
+        
+        print(f"{Fore.CYAN} [INFO] Creating annotation file... {Style.RESET_ALL}")
+
+        #SOME CONTRACT ARE NOT AVAILABLE/ERRORS
+        available_runtime_contracts = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]
+        available_creation_contracts = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]
+     
+        available_contracts = list(set(available_runtime_contracts) & set(available_creation_contracts))
+        # remove extensions
+        available_contracts = [f.replace('.gpickle', '') for f in available_contracts]
+        
+        print(f"{Fore.GREEN}Using {len(available_contracts)} contracts:\n\n{Style.RESET_ALL}")
+        print(available_contracts)
         # Assuming SOURCE_DATA and ANNOTATION_DATA are defined
         annotation = []
-
+        processed_contracts = 0
         ## Iterate over each file and its contracts
-        for file_name, contracts in contract_data.items():
-            base_name = file_name.replace('.sol', '')  # Strip .sol extension
+        for file_name, contracts in contract_data.items():     
             for contract_name in contracts.keys():
                 # Construct annotation for each contract
-                annotation.append({
-                    "contract_name": f"{base_name}-{contract_name}.sol",
-                    "targets": 1  # Ignored as per request but set default for consistency
-                })
-
+                cn = file_name.replace(".sol",f"-{contract_name}.sol")
+                if cn.split(".")[0] in available_contracts:
+                    annotation.append({
+                        "contract_name": cn,
+                        "targets": -1  # Ignored 
+                    })
+                    processed_contracts += 1
+                else:
+                    print(f"{Fore.RED}WARNING: Contract {file_name} not available {Style.RESET_ALL}")
+        print(f"{Fore.GREEN}Processed {processed_contracts}/{len(contract_data)} contracts{Style.RESET_ALL}")
         # Write to JSON file
+        print(f"Annotations {len(annotation)}")
         with open(ANNOTATION_DATA, 'w') as f:
             json.dump(annotation, f, indent=4)
-        
 
-        # print(f'{Fore.CYAN} [INFO] Generating cryptic evm files...{Style.RESET_ALL}')
-        # # Generate crytic evm files
-        # generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
+        print(f'{Fore.CYAN} [INFO] Merging .gpickle ... {Style.RESET_ALL}')
 
-        # print(f'{Fore.CYAN} [INFO] Generating creation and runtime files...{Style.RESET_ALL}')
-        # generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
-
-        # generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
-        # generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')  
-
-        # print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
-        # creation_dot_files = [f for f in os.listdir(CREATION_OUT_GRAPH) if f.endswith('.dot')]
-        # runtime_dot_files = [f for f in os.listdir(RUNTIME_OUT_GRAPH) if f.endswith('.dot')]
-
-        # for dot in creation_dot_files:
-        #     dot2gpickle(join(CREATION_OUT_GRAPH, dot), join(CREATION_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
-        # for dot in runtime_dot_files:
-        #     dot2gpickle(join(RUNTIME_OUT_GRAPH, dot), join(RUNTIME_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
-        
-        # print(f'{Fore.CYAN} [INFO] Merging .gpickle {Style.RESET_ALL}')
-
-        # x_creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
-        # x_creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
-
+        x_creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
+        x_creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
        
-        # x_runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
-        # x_runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
+        x_runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
+        x_runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
 
-        # merge_byte_code_cfg(CREATION_OUT_GPICKLES, x_creation_gpickle_files, x_creation_balanced_compressed_graph)
-        # merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, x_runtime_gpickle_files, x_runtime_balanced_compressed_graph)
+        merge_byte_code_cfg(CREATION_OUT_GPICKLES, x_creation_gpickle_files, x_creation_balanced_compressed_graph)
+        merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, x_runtime_gpickle_files, x_runtime_balanced_compressed_graph)
 
-        # output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
-        # output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
+        print(f'{Fore.CYAN} [INFO] Compressing graph... {Style.RESET_ALL}')
 
-        # copy(x_creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
-        # copy(x_runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+        output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
+        output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
 
-        # print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
+        copy(x_creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
+        copy(x_runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+
+        print(f'{Fore.GREEN} Process complete... {Style.RESET_ALL}')
         sys.exit(0)
 
     if option == '1':
-        print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve...{Style.RESET_ALL}')
-        print(f'{Fore.CYAN} [INFO] Generating annotation files...{Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve... {Style.RESET_ALL}')
+        print(f'{Fore.CYAN} [INFO] Generating annotation files... {Style.RESET_ALL}')
         
         # Create annotation file
         clean_source_code = './experiments/ge-sc-data/smartbugs-wild-clean-contracts'
@@ -644,6 +657,7 @@ if __name__ == '__main__':
     if option == '3b':
         # Convert dot to gpickle
         for bug, counter in bug_type.items():
+            print(f'{Fore.CYAN} [INFO] Processing bug {bug}...{Style.RESET_ALL}')
             creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
             runtime_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
             creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]
