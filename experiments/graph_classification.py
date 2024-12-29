@@ -20,6 +20,13 @@ from statistics import mean
 
 from sco_models.utils import get_classification_report
 from sco_models.graph_utils import reveert_map_node_embedding, load_hetero_nx_graph
+import datetime
+
+# Get the current time
+current_time = datetime.datetime.now()
+# Format the time for a folder name (e.g., "2024-12-16_14-35-22")
+formatted_time = current_time.strftime("%Y-%m-%d_%H-%M-%S")
+
 
 import colorama
 from colorama import Fore, Style, Back
@@ -121,6 +128,7 @@ def get_node_id_by_file_name(nx_graph):
 
 
 def save_last_hidden(hiddens, targets, contract_name, output):
+    print(hiddens.shape[0], targets.shape[0], len(contract_name))
     assert hiddens.shape[0] == targets.shape[0] == len(contract_name)
     logger = []
     for i in range(hiddens.shape[0]):
@@ -348,16 +356,43 @@ def base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device):
         json.dump(report, f, indent=2)
 
 
+def pad_or_trim_weights(checkpoint_dict, model_dict):
+    updated_dict = {}
+    for key, param in checkpoint_dict.items():
+        if key in model_dict:
+            model_param = model_dict[key]
+            if param.shape != model_param.shape:
+                print(f"Adjusting layer {key}: {param.shape} -> {model_param.shape}")
+                # Pad or trim dimensions to match the model
+                param = match_dimensions(param, model_param)
+        updated_dict[key] = param
+    return updated_dict
+
+def match_dimensions(param, target_param):
+    """Adjusts the dimensions of the param tensor to match target_param."""
+    # Create a new tensor with the desired size
+    new_param = torch.zeros_like(target_param)
+    # Determine slicing or filling indices
+    slices = tuple(slice(0, min(p, t)) for p, t in zip(param.shape, target_param.shape))
+    new_param[slices] = param[slices]
+    return new_param
+
+
 def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_only=False,verify_set=None):
     logs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
-    testlogs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
+    #print(logs)
+    testlogs = f"./newMethods/logs/test_logs/{formatted_time}/{bugtype}" # f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
+
     if not os.path.exists(logs):
         os.makedirs(logs)
     if not os.path.exists(testlogs):
         os.makedirs(testlogs)
+
     output_models = f'{ROOT}/models/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
+
     if not os.path.exists(output_models):
-        os.makedirs(output_models)
+        os.makedirs(output_models) 
+
     feature_extractor = feature_extractor
     node_feature = 'nodetype'
 
@@ -367,30 +402,47 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
     model.reset_parameters()
     model.to(device)
     X_train, X_val, y_train, y_val = dataset
-
+    X_verify,y_verify = None,None
     
     if test_only == False:
-        print(f" X_Train {X_train} \n\n y_train{ y_train}\n\n")
+        print(f" X_Train {X_train[0]} \n\n y_train{ y_train[0]}\n\n")
         model = train(model, X_train, y_train, device)
+        
     else:
-        print(f"Verify set:{verify_set}\n\n")
-        print(f"X_val:{X_val}\n\n")
-        model.load_state_dict(torch.load(join(output_models, f'hgt.pth'),weights_only=True))
+        X_verify,y_verify = verify_set
+        # print(f"Verify set:{len(verify_set)}\n\n")
+
+        # print(f"X_val:{len(X_val)}\n\n")
+        # print(f"y_val:{len(y_val)}\n\n")
+
+        checkpoint = torch.load(join(output_models, f'hgt.pth'),weights_only=True)
+        checkpoint_state_dict = checkpoint
+        #print(checkpoint)
+        model_state_dict = model.state_dict()
+
+        # Adjust the checkpoint state_dict
+        adjusted_state_dict = pad_or_trim_weights(checkpoint_state_dict, model_state_dict)
+
+        # Load the modified state_dict
+        model.load_state_dict(adjusted_state_dict)
+
+        logs = testlogs
 
     save_path = os.path.join(output_models, f'hgt.pth')
     torch.save(model.state_dict(), save_path)
     model.eval()
     with torch.no_grad():
-        logits, hiddens = model(X_val) if test_only == False else model(verify_set)
+        logits, hiddens = model(X_val) if test_only == False else model(X_verify)
         logits = logits.to(device)
         # test_acc, test_micro_f1, test_macro_f1 = score(y_val, logits)
         test_results = {}
         if test_only == False:
             test_results = get_classification_report(y_val, logits, output_dict=True)
         else:
-            print(logits, hiddens)
+            print(f"Logits: {len(logits)} | Hiddens: {len(hiddens)} | y_verify: {len(y_verify)} | X_verify: {len(X_verify)}") 
+            test_results =  dict(zip(X_verify,logits.tolist()))
 
-    save_last_hidden(hiddens, y_val, X_val, join(logs, 'last_hiddens.json'))
+    save_last_hidden(hiddens, y_verify, X_verify, join(logs, 'last_hiddens.json'))
 
     if os.path.isfile(join(logs, 'test_report.json')):
         with open(join(logs, 'test_report.json'), 'r') as f:
@@ -689,9 +741,16 @@ def main(device):
     for bugtype in bug_list:
         print('Bugtype {}'.format(bugtype))
         for i in range(REPEAT):
-            print(f'Processing bugtype {bugtype} {i+1}-th/{REPEAT} reppeat ')
+            if option != 'ft':
+                print(f'Processing bugtype {bugtype} {i+1}-th/{REPEAT} reppeat ')
+            else:
+                print(f'Processing bugtype {bugtype} testing')
+
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
+            
+            #print(compressed_graph[0])
             nx_graph = nx.read_gpickle(compressed_graph)
+            #print(nx_graph)
             file_name_dict = get_node_id_by_file_name(nx_graph)
             # label = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/graph_labels.json'
             label = f'{ROOT}/ge-sc-data/byte_code/smartbugs/contract_labels/{bugtype}/{BYTECODE}_balanced_contract_labels.json'
@@ -700,18 +759,23 @@ def main(device):
                 annotations = json.load(f)
             # total_files = [f for f in os.listdir(source_path) if f.endswith('.gpickle')]
             total_files = [anno['contract_name'] for anno in annotations]
+            #print("Annotations: \n\n")
             #print(total_files)
 
 
             # ###VERIFY SET 
-            # verify_compressed_graph = f'./newMethods/sampleDataset/bytecode_compressed_graphs.gpickle'
-            # verify_nx_graph = nx.read_gpickle(compressed_graph)
-            # verify_file_name_dict = get_node_id_by_file_name(nx_graph)
-            # total_verify_files = tuple([f for f in os.listdir(f'./newMethods/sampleDataset') if f.endswith('.sol')])
-            # print(total_verify_files)
-            
-            
-            
+            with open("./newMethods/sampleDataset/annotation.json", 'r') as f:
+                vannotations = json.load(f)
+            verify_compressed_graph = f'./newMethods/sampleDataset/{BYTECODE}/gpickles/compressed_graphs/{BYTECODE}_balanced_cfg_compressed_graphs.gpickle'
+            verify_nx_graph = nx.read_gpickle(compressed_graph)
+            # print(verify_compressed_graph)
+            # print(verify_nx_graph)
+            verify_file_name_dict = get_node_id_by_file_name(nx_graph)
+            total_verify_files = tuple([vanno['contract_name'] for vanno in vannotations])
+
+            print(f"Total verification files:{len(total_verify_files)}")
+            verify_set = (total_verify_files, torch.tensor([vanno['targets'] for vanno in vannotations]))   
+         
             
             
             assert len(total_files) <= len(annotations)
@@ -727,11 +791,14 @@ def main(device):
             targets = torch.tensor(targets, device=device)
 
             assert len(total_files) == len(targets)
-            print(len(total_files), len(targets))
+            
             X_train, X_val, y_train, y_val = train_test_split(total_files, targets, train_size=TRAIN_RATE)
             dataset = (tuple(X_train), tuple(X_val), y_train, y_val)
-
-            print('Start training with {}/{} train/val smart contracts'.format(len(X_train), len(X_val)))
+  
+            if option != 'ft':
+                print(len(total_files), len(targets))
+                print('Start training with {}/{} train/val smart contracts'.format(len(X_train), len(X_val)))
+            
             gae_embedded = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/gesc_matrices_node_embedding/matrix_gae_dim128_of_core_graph_of_{bugtype}_{COMPRESSED_GRAPH}_compressed_graphs.pkl'
             line_embedded = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/gesc_matrices_node_embedding/balanced/matrix_line_dim128_of_core_graph_of_{bugtype}_{BYTECODE}_balanced_{COMPRESSED_GRAPH}_compressed_graphs.pkl'
             node2vec_embedded = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/gesc_matrices_node_embedding/balanced/matrix_node2vec_dim128_of_core_graph_of_{bugtype}_{BYTECODE}_balanced_{COMPRESSED_GRAPH}_compressed_graphs.pkl'
@@ -756,7 +823,8 @@ def main(device):
             elif(option == '8'):
                 node2vec(compressed_graph, dataset, node2vec_embedded, bugtype, device)
             elif option == 'ft':
-                full_test_execution(compressed_graph, dataset, total_verify_files , line_embedded, node2vec_embedded, bugtype)
+                full_test_execution(verify_compressed_graph, dataset, verify_set , line_embedded, node2vec_embedded, bugtype)
+                break
             else:   
                 print(f"{Fore.RED}Invalid option.{Style.RESET_ALL}")
                 sys.exit(1)

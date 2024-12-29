@@ -29,6 +29,11 @@ from sco_models.graph_utils import add_hetero_ids, \
                          get_length_3_metapath, get_length_2_metapath, \
                          generate_lstm_node_features
 
+import colorama
+from colorama import Fore, Style, Back
+# Initialize colorama for Windows compatibility
+colorama.just_fix_windows_console()
+
 
 class HGTLayer(nn.Module):
     def __init__(self,
@@ -411,15 +416,19 @@ class HGTVulGraphClassifier(nn.Module):
         # self.filename_mapping = {file: idx for idx, file in enumerate(self.extracted_graph)}
         self.device = device
         # Get Global graph
+        print(f"COMPRESSED GLOBAL GRAPH PATH: {compressed_global_graph_path}")
         nx_graph = load_hetero_nx_graph(compressed_global_graph_path)
         self.nx_graph = nx_graph
+        
         nx_g_data = generate_hetero_graph_data(nx_graph)
+       
         self.total_nodes = len(nx_graph)
 
         # Get Node Labels
         self.node_ids_dict = get_node_ids_dict(nx_graph)
         # _node_tracker = get_node_tracker(nx_graph, self.filename_mapping)
         self.node_ids_by_filename = get_node_ids_by_filename(nx_graph)
+        
         # Reflect graph data
         self.symmetrical_global_graph_data = reflect_graph(nx_g_data)
         # self.symmetrical_global_graph_data = nx_g_data
@@ -564,8 +573,8 @@ class HGTVulGraphClassifier(nn.Module):
             assert len(self.node_ids_dict[ntype]) == feature.shape[0]
             hiddens[self.node_ids_dict[ntype]] = feature
 
-       #print(f"NODE LIST {self.node_ids_by_filename.keys()}\n\n")
-
+        #print(f"NODE LIST: {list(self.node_ids_by_filename.keys())[:5]}\n\n")
+        c = 0
         batched_graph_embedded = []
         for g_name in batched_g_name:
             node_list = self.node_ids_by_filename
@@ -573,16 +582,19 @@ class HGTVulGraphClassifier(nn.Module):
             if not g_name in node_list:
                 #print(f"Graph {g_name} not found in node list")
                 continue
+            c+=1
+            #print(f"{Fore.GREEN}Graph {g_name} found{Style.RESET_ALL}")
             node_list = node_list[g_name]
             batched_graph_embedded.append(hiddens[node_list].mean(0).tolist())
+            
+        #print("LEN BATCHED GRAPH: ", c)
+
 
         #print(f"LEN BATCHED GRAPH EMBEDDED: {len(batched_graph_embedded)}")
 
         batched_graph_embedded = torch.tensor(batched_graph_embedded).to(self.device)
         if save_featrues:
             torch.save(batched_graph_embedded, save_featrues)
-
-        #print(f"BATCHED GRAPH EMBEDDED: {batched_graph_embedded}")
 
         output = self.classify(batched_graph_embedded)
         return output, batched_graph_embedded
