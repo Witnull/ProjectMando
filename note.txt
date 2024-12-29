@@ -1,3 +1,12 @@
-1. Binary (clean versus vulnerable) classification of a node or graph
+1. Binary multi label (clean versus vulnerable) classification of a node or graph
 2. 100 and 50 epochs for Fine-Grained and Coarse-Grained tasks, respectively
+2a. Fine-Grained is node_classification and it requires the dataset to be mark/annotate which func is vuln by profs -
+beforehand to train and in prediction the dataset will also need that to check the correctness 
+2b. Coarse-Grained is graph_classification and it requires the dataset to be mark/annotate and create a graph to train/predict -- took quite some times
 3. However, some bug types in our dataset have fewer than 50 contracts, resulting in insufficient training/testing samples
+4. The verifying shows that the methods might insufficient due to long time processing (10h30m for pre-process 1000 samples) and predicting the results and achieve high rate of FP 
+5. And the model scale up fast at each new types of vuln due to 1 model per vul
+6. Also the scale of the graph is also scale up at each new contracts and at 17k contracts for pre-process Coarse-Grained (process_graphs\byte_code_control_flow_graph_generator.py) it tooks 169hrs+ to complete 1/2 steps.
+7. The  Coarse-Grained  train only supports 6/7 types of nodes that the graph have. So when i try to load the weight from saved model -
+to predict the 1000 samples it calls error due to mising 7th type nodes so i have to auto random generate. -
+This cause the model to maybe decrease drastically in predicting the right result.
