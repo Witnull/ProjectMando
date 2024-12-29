@@ -1,4 +1,0 @@
-Test Report:
-Accuracy: 0.6400
-Precision: 0.4626
-F1 Score: 0.4478
