@@ -14,9 +14,9 @@ Some folders may not exist on repo, this is expected.
 ```
 .
 |
-+---- assets (Nothing, just some paper stuffs)
++---- assets 
 |
-+---- data (Nothing)
++---- data 
 |
 +---- experiments (VERY IMPORTANT)
 |        |
@@ -34,7 +34,7 @@ Some folders may not exist on repo, this is expected.
 |
 |
 |
-+---- forensics (Nothing)
++---- forensics 
 |
 +---- Mando (Contains the Old Mando, may not need to put it in, this is for ease of access to the old script to test it)
 |
@@ -47,6 +47,16 @@ Some folders may not exist on repo, this is expected.
 |
 |
 +---- models (Auto Generated)
+|
+|
+|
++---- newMethods (Our apply to tét with new datasets)
+|      |
+|      |
+|      +---- archive : Dataset - SoliAudit 
+|      +---- FromCSVToFile.py - Extract the source_code from csv to .sol files
+|      +---- result_parse.py - Parsing the result from ./newMethods/logs/test_logs/<id>/ folder 
+|              +---- output might like this file: ./test_sampleDataset_1000.txt
 |
 +---- process_graphs (VERY IMPORTANT) | DO NOT OVERWRITE THIS
 |
@@ -93,7 +103,7 @@ Follow above Dir tree to install and setup
 
 `https://github.com/minhnn-tiny/ge-sc-dataset.git`
 \
-\*\* Dataset
+\*\* Dataset for test 
 
 ---
 
@@ -161,6 +171,23 @@ To show the result table
 python -m experiments.node_classification --result
 ```
 
+
+# References:
+
+## SoliAudit
+```
+@INPROCEEDINGS{8939256,
+  author={Liao, Jian-Wei and Tsai, Tsung-Ta and He, Chia-Kang and Tien, Chin-Wei},
+  booktitle={2019 Sixth International Conference on Internet of Things: Systems, Management and Security (IOTSMS)}, 
+  title={SoliAudit: Smart Contract Vulnerability Assessment Based on Machine Learning and Fuzz Testing}, 
+  year={2019},
+  volume={},
+  number={},
+  pages={458-465},
+  keywords={Smart contracts;Blockchain;Machine learning;Feature extraction;Security;Fuzzing;Smart contract;vulnerability;fuzz testing;machine learning},
+  doi={10.1109/IOTSMS48152.2019.8939256}}
+
+```
 ---
 
 <!--
