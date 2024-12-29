@@ -410,13 +410,11 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
     #print(logs)
     testlogs = f"./newMethods/logs/test_logs/{formatted_time}/{bugtype}" # f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
 
-    #print(logs)
-    testlogs = f"./newMethods/logs/test_logs/{formatted_time}/{bugtype}" # f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
-
     if not os.path.exists(logs):
         os.makedirs(logs)
     if not os.path.exists(testlogs):
         os.makedirs(testlogs)
+
 
     output_models = f'{ROOT}/models/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
 
@@ -784,11 +782,10 @@ def main(device):
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
             
             #print(compressed_graph[0])
-            
-            #print(compressed_graph[0])
+
             nx_graph = nx.read_gpickle(compressed_graph)
             #print(nx_graph)
-            #print(nx_graph)
+
             file_name_dict = get_node_id_by_file_name(nx_graph)
             # label = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/graph_labels.json'
             label = f'{ROOT}/ge-sc-data/byte_code/smartbugs/contract_labels/{bugtype}/{BYTECODE}_balanced_contract_labels.json'
@@ -829,6 +826,7 @@ def main(device):
             targets = torch.tensor(targets, device=device)
 
             assert len(total_files) == len(targets)
+            
             
             X_train, X_val, y_train, y_val = train_test_split(total_files, targets, train_size=TRAIN_RATE)
             dataset = (tuple(X_train), tuple(X_val), y_train, y_val)
