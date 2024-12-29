@@ -6,6 +6,7 @@ from os.path import join
 from copy import deepcopy
 from shutil import copy
 
+import time
 import re
 from textwrap import indent
 import dgl
@@ -15,6 +16,7 @@ import networkx as nx
 from tqdm import tqdm
 from slither.slither import Slither
 import logging
+from datetime import datetime
 import colorama
 from colorama import Fore, Style, Back
 # Initialize colorama for Windows compatibility
@@ -24,12 +26,16 @@ colorama.just_fix_windows_console()
 EDGE_DICT = {('None', 'None', 'None'): '0', ('None', 'None', 'orange'): '1', ('Msquare', 'None', 'gold'): '2', ('None', 'None', 'lemonchiffon'): '3', ('Msquare', 'crimson', 'crimson'): '4', ('None', 'None', 'crimson'): '5', ('Msquare', 'crimson', 'None'): '6', ('Msquare', 'crimson', 'lemonchiffon'): '7'}
 DRY_RUNS = 0
 
-def setup_logging():
+def setup_logging(log_dir = './logs'):
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+    log_dir = log_dir
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(log_dir, f'processing_log_{timestamp}.txt')
     return logging.getLogger(__name__)
 
 def get_solc_version(source):
@@ -102,6 +108,11 @@ def creat_edge_label(g):
 
 
 def createLabel(g, d):
+     
+        print("EDGE_DICT mappings:")
+        for key, value in d.items():
+            print(f"Node attributes {key} -> type {value}")
+
         nodes = g.nodes()
         int2label = {}
         startwith, endwith = 0,1
@@ -148,6 +159,9 @@ def dot2gpickle(dot_file, gpickle_file):
     # node_lables = creat_node_label(nx_g, EDGE_DICT)
     # edge_labels = creat_edge_label(nx_g)
     node_lables, edge_labels = createLabel(nx_g, EDGE_DICT)
+    unique_types = set(node_lables.values())
+    print(f"Node types found in {dot_file}: {sorted(unique_types)}")
+
     nx.set_node_attributes(nx_g, node_lables, name='node_type')
     nx.set_node_attributes(nx_g, source_file, name='source_file')
     nx.set_edge_attributes(nx_g, edge_labels)
@@ -156,7 +170,7 @@ def dot2gpickle(dot_file, gpickle_file):
 
 def merge_byte_code_cfg(source_path, graph_list, output):
     merged_graph = None
-    for graph in graph_list:
+    for graph in tqdm(graph_list, desc="Merging byte code CFG"):
         nx_graph = nx.read_gpickle(join(source_path, graph))
         if merged_graph is None:
             merged_graph = deepcopy(nx_graph)
@@ -217,7 +231,7 @@ def generate_crytic_evm(sourcecode_path, output):
     PATTERN = re.compile(r"pragma solidity\s*(?:\^|>=|<=)?\s*(\d+\.\d+\.\d+)")
     contracts = [f for f in os.listdir(sourcecode_path) if f.endswith('.sol')]
 
-    for sc in contracts:
+    for sc in tqdm(contracts, desc="Generate Crytic EVM"):
             sc_path = join(sourcecode_path, sc)
             with open(join(sourcecode_path, sc), encoding="utf8") as file_desc:
                 buf = file_desc.read()
@@ -242,7 +256,7 @@ def generate_evm(crytic_evm_path, creation_output, runtime_output):
     byte_codes = [f for f in os.listdir(crytic_evm_path) if f.endswith('.json')]
     success = 0 
 
-    for bc in byte_codes:
+    for bc in tqdm(byte_codes, desc="Generating EVM"):
         try:
             with open(join(crytic_evm_path, bc), 'r') as f:
                 annotation = json.load(f)
@@ -289,7 +303,7 @@ def generate_graph_from_evm(evm_path, output, evm_type):
     os.makedirs(output, exist_ok=True)
     code_type = '-c' if evm_type == 'creation' else '-r'
     evm_files = [f for f in os.listdir(evm_path) if f.endswith('.evm')]
-    for evm in evm_files:
+    for evm in tqdm(evm_files, desc="Generating graph from evm"):
         if evm.endswith('.evm'):
             evm_file = join(evm_path, evm)
             print(f"{Fore.CYAN}[INFO] Processing: {evm_file}{Style.RESET_ALL}")
@@ -412,17 +426,20 @@ def print_info():
     print(f"{Fore.CYAN} [3b] Convert .dot to .gpickle {Style.RESET_ALL}")
     print(f"{Fore.CYAN} [4] Create balanced dataset.{Style.RESET_ALL}")
     print(f"{Fore.CYAN} [5] Merge .gpickles files into {Fore.YELLOW}compressred_graph.gpickle {Fore.CYAN} file.{Style.RESET_ALL}")
+    
     print(f"{Fore.CYAN} [ft] Make a test dataset {Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}Note: Might need to unzip the file experiments/ge-sc-data/smartbugs-wild-2742-clean-contracts.zip to experiments/ge-sc-data/smartbugs-wild-clean-contracts  {Style.RESET_ALL}")
     print(f"\n{Fore.YELLOW}No command-line arguments are required. Modify the script to change paths and bug types.{Style.RESET_ALL}")
     # Function to wait for user input before proceeding
 
     print(f"\n\n {Back.RED}!!! Warning: This script may install many versions of Solc. Recommended to use Docker or venv.{Style.RESET_ALL}\n\n")
+ 
     option_list = ['1', '2a', '2b', '3','3b','4','5','ft']
     option = input(f"{Back.BLUE}Please input your option ({', '.join(option_list)}):{Style.RESET_ALL}")
     if option not in option_list:       
         print(f"{Fore.RED}Invalid option. Please input {', '.join(option_list)}.{Style.RESET_ALL}")
         sys.exit(1)
+    
     
     return option
 
@@ -430,7 +447,7 @@ def extract_contract_data(directory):
     contract_data = {}
 
     # Iterate through all .sol files in the directory
-    for file_name in os.listdir(directory):
+    for file_name in tqdm(os.listdir(directory), desc="Extracting contract data"):
         if file_name.endswith('.sol'):
             file_path = os.path.join(directory, file_name)
             with open(file_path, 'r') as f:
@@ -466,17 +483,19 @@ if __name__ == '__main__':
               'unchecked_low_level_calls': 95}
     option = print_info()
 
+
     # # Forencis gpickle graph
     # source_compressed_graph = './experiments/ge-sc-data/source_code/access_control/clean_57_buggy_curated_0/cfg_compressed_graphs.gpickle'
     # # forencis_gpickle(source_compressed_graph)
     # forencis_gpickle(source_compressed_graph)
 
     if option == 'ft':
-        SOURCE_DATA = './newMethods/sampleDataset'
+        start_total_time = time.time()
+        SOURCE_DATA = './newMethods/newDataset'
         CRYTIC_EVM_OUT= f'{SOURCE_DATA}/crytic_evm'
         ANNOTATION_DATA = f'{SOURCE_DATA}/annotation.json'
         SC_CAT = f'{SOURCE_DATA}/sc_cat.json'
-
+        logger = setup_logging(SOURCE_DATA+"/logger_history")
         CREATION_OUT = f'{SOURCE_DATA}/creation'
         CREATION_OUT_EVM = f'{CREATION_OUT}/evm'
         CREATION_OUT_GRAPH = f'{CREATION_OUT}/graphs'
@@ -502,87 +521,135 @@ if __name__ == '__main__':
         os.makedirs(RUNTIME_OUT_GPICKLES, exist_ok=True)
         os.makedirs(RUNTIME_OUT_GPICKLES_COMPRESSED, exist_ok=True)
 
-
+        start_extract_contract_data_time = time.time()
         contract_data = extract_contract_data(SOURCE_DATA)
         with open(SC_CAT, 'w') as json_file:
             json.dump(contract_data, json_file, indent=4)
+        delta_extract_contract_data_time = time.time() - start_extract_contract_data_time
 
-        print(f'{Fore.CYAN} [INFO] Generating cryptic evm files... {Style.RESET_ALL}')
+
+        start_crytic_evm_time = time.time()
+        logger.info(f'{Fore.CYAN} [INFO] Generating cryptic evm files... {Style.RESET_ALL}')
         # Generate crytic evm files
         generate_crytic_evm(SOURCE_DATA,  CRYTIC_EVM_OUT)
+        delta_crytic_evm_time = time.time() - start_crytic_evm_time
 
-        print(f'{Fore.CYAN} [INFO] Generating creation and runtime files... {Style.RESET_ALL}')
+ 
+        start_evm_time = time.time()
+        logger.info(f'{Fore.CYAN} [INFO] Generating evm creation and runtime files... {Style.RESET_ALL}')
         generate_evm(CRYTIC_EVM_OUT, CREATION_OUT_EVM, RUNTIME_OUT_EVM)
+        delta_evm_time = time.time() - start_evm_time
 
+        start_evm_creation_time = time.time()
         generate_graph_from_evm(CREATION_OUT_EVM, CREATION_OUT_GRAPH, 'creation')
+        delta_evm_creation_time = time.time() - start_evm_creation_time
+            
+        start_evm_runtime_time = time.time()
         generate_graph_from_evm(RUNTIME_OUT_EVM, RUNTIME_OUT_GRAPH, 'runtime')  
+        delta_evm_runtime_time = time.time() - start_evm_runtime_time
 
-        print(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
+        start_dot2gpickle_time = time.time()
+        logger.info(f'{Fore.CYAN} [INFO] Converting... .dot to .gpickle {Style.RESET_ALL}')
         creation_dot_files = [f for f in os.listdir(CREATION_OUT_GRAPH) if f.endswith('.dot')]
         runtime_dot_files = [f for f in os.listdir(RUNTIME_OUT_GRAPH) if f.endswith('.dot')]
         
-        for dot in creation_dot_files:
-            dot2gpickle(join(CREATION_OUT_GRAPH, dot), join(CREATION_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
-        for dot in runtime_dot_files:
-            dot2gpickle(join(RUNTIME_OUT_GRAPH, dot), join(RUNTIME_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
         
-        print(f"{Fore.CYAN} [INFO] Creating annotation file... {Style.RESET_ALL}")
+        logger.info("Processing creation dot files...")
+        for dot in tqdm(creation_dot_files, desc="Creation files"):
+            dot2gpickle(join(CREATION_OUT_GRAPH, dot), join(CREATION_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
+
+        logger.info("Processing runtime dot files...")
+        for dot in tqdm(runtime_dot_files, desc="Runtime files"):
+            dot2gpickle(join(RUNTIME_OUT_GRAPH, dot), join(RUNTIME_OUT_GPICKLES, dot.replace('.dot', '.gpickle')))
+        delta_dot2gpickle_time = time.time() - start_dot2gpickle_time
+
+        start_annotation_time = time.time()
+        logger.info(f"{Fore.CYAN} [INFO] Creating annotation file... {Style.RESET_ALL}")
 
         #SOME CONTRACT ARE NOT AVAILABLE/ERRORS
         available_runtime_contracts = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]
         available_creation_contracts = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]
-     
+
         available_contracts = list(set(available_runtime_contracts) & set(available_creation_contracts))
         # remove extensions
         available_contracts = [f.replace('.gpickle', '') for f in available_contracts]
-        
-        print(f"{Fore.GREEN}Using {len(available_contracts)} contracts:\n\n{Style.RESET_ALL}")
-        print(available_contracts)
+
+        logger.info(f"{Fore.GREEN}Using {len(available_contracts)} contracts:\n\n{Style.RESET_ALL}")
+        logger.info(available_contracts)
         # Assuming SOURCE_DATA and ANNOTATION_DATA are defined
         annotation = []
         processed_contracts = 0
+        total_contracts = 0
+
         ## Iterate over each file and its contracts
+        logger.info("Processing contracts...")
+        progress_bar = tqdm(total=sum(len(contracts) for contracts in contract_data.values()))
         for file_name, contracts in contract_data.items():     
             for contract_name in contracts.keys():
+                total_contracts += 1
                 # Construct annotation for each contract
                 cn = file_name.replace(".sol",f"-{contract_name}.sol")
                 if cn.split(".")[0] in available_contracts:
                     annotation.append({
                         "contract_name": cn,
-                        "targets": -1  # Ignored 
+                        "targets": -1  # Ignored due to many label, implemented other method to calculate
                     })
                     processed_contracts += 1
                 else:
-                    print(f"{Fore.RED}WARNING: Contract {file_name} not available {Style.RESET_ALL}")
-        print(f"{Fore.GREEN}Processed {processed_contracts}/{len(contract_data)} contracts{Style.RESET_ALL}")
+                    logger.info(f"{Fore.RED}WARNING: Contract {cn} not available {Style.RESET_ALL}")
+                progress_bar.update(1)
+        progress_bar.close()
+
+        logger.info(f"{Fore.GREEN}Processed {processed_contracts}/{total_contracts} contracts{Style.RESET_ALL}")
         # Write to JSON file
-        print(f"Annotations {len(annotation)}")
+        logger.info(f"Annotations {len(annotation)}")
         with open(ANNOTATION_DATA, 'w') as f:
             json.dump(annotation, f, indent=4)
+        delta_annotation_time = time.time() - start_annotation_time
 
-        print(f'{Fore.CYAN} [INFO] Merging .gpickle ... {Style.RESET_ALL}')
+        start_merge_time = time.time() 
+        logger.info(f'{Fore.CYAN} [INFO] Merging .gpickle ... {Style.RESET_ALL}')
 
         x_creation_gpickle_files = [f for f in os.listdir(CREATION_OUT_GPICKLES) if f.endswith('.gpickle')]     
         x_creation_balanced_compressed_graph = join(CREATION_OUT_GPICKLES, 'creation_balanced_compressed_graphs.gpickle')
-       
+
         x_runtime_gpickle_files = [f for f in os.listdir(RUNTIME_OUT_GPICKLES) if f.endswith('.gpickle')]   
         x_runtime_balanced_compressed_graph = join(RUNTIME_OUT_GPICKLES, 'runtime_balanced_compressed_graphs.gpickle')
 
+        logger.info("Merging creation graphs...")
         merge_byte_code_cfg(CREATION_OUT_GPICKLES, x_creation_gpickle_files, x_creation_balanced_compressed_graph)
+        logger.info("Merging runtime graphs...")
         merge_byte_code_cfg(RUNTIME_OUT_GPICKLES, x_runtime_gpickle_files, x_runtime_balanced_compressed_graph)
+        delta_merge_time = time.time() - start_merge_time
 
-        print(f'{Fore.CYAN} [INFO] Compressing graph... {Style.RESET_ALL}')
+        start_compress_time = time.time()
+        logger.info(f'{Fore.CYAN} [INFO] Compressing graph... {Style.RESET_ALL}')
 
-        output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED }/creation_balanced_cfg_compressed_graphs.gpickle'
+        output_creation_balanced_compress_graph = f'{CREATION_OUT_GPICKLES_COMPRESSED}/creation_balanced_cfg_compressed_graphs.gpickle'
         output_runtime_balanced_compress_graph = f'{RUNTIME_OUT_GPICKLES_COMPRESSED}/runtime_balanced_cfg_compressed_graphs.gpickle'
 
         copy(x_creation_balanced_compressed_graph, output_creation_balanced_compress_graph)
         copy(x_runtime_balanced_compressed_graph, output_runtime_balanced_compress_graph)
+        delta_compress_time = time.time() - start_compress_time
 
-        print(f'{Fore.GREEN} Process complete... {Style.RESET_ALL}')
+        logging.info(f"Total time: {time.time() - start_total_time}")
+        logging.info(f"Extract contract data time: {delta_extract_contract_data_time}")
+        logging.info(f"Crytic evm time: {delta_crytic_evm_time}")
+        logging.info(f"EVM time: {delta_evm_time}")
+        logging.info(f"EVM creation time: {delta_evm_creation_time}")
+        logging.info(f"EVM runtime time: {delta_evm_runtime_time}")
+        logging.info(f"Dot2gpickle time: {delta_dot2gpickle_time}")
+        logging.info(f"Annotation time: {delta_annotation_time}")
+        logging.info(f"Merge time: {delta_merge_time}")
+        logging.info(f"Compress time: {delta_compress_time}")
+        logging.info(f'Total fragments: {processed_contracts}')
+
+
+        logger.info(f'{Fore.GREEN} Process complete... {Style.RESET_ALL}')
         sys.exit(0)
 
     if option == '1':
+
         print(f'{Fore.CYAN} [INFO] Generating graph from evm files by EtherSolve... {Style.RESET_ALL}')
         print(f'{Fore.CYAN} [INFO] Generating annotation files... {Style.RESET_ALL}')
         
@@ -654,10 +721,12 @@ if __name__ == '__main__':
         print(f'{Fore.GREEN} Process complete...{Style.RESET_ALL}')
         sys.exit(0)
 
+   
     if option == '3b':
         # Convert dot to gpickle
         for bug, counter in bug_type.items():
             print(f'{Fore.CYAN} [INFO] Processing bug {bug}...{Style.RESET_ALL}')
+        
             creation_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/creation/graphs/{bug}/clean_{counter}_buggy_curated_0'
             runtime_graph_path = f'./experiments/ge-sc-data/byte_code/smartbugs/runtime/graphs/{bug}/clean_{counter}_buggy_curated_0'
             creation_dot_files = [f for f in os.listdir(creation_graph_path) if f.endswith('.dot')]

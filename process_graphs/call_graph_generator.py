@@ -631,7 +631,7 @@ if __name__ == '__main__':
             auto_generate_dirs(output_CG_path)
             smart_contracts = [join(source, f) for f in os.listdir(source) if f.endswith('.sol')]
             list_vulnerabilities_json_files = ['data/solidifi_buggy_contracts/reentrancy/vulnerabilities.json',
-                # 'data/solidifi_buggy_contracts/access_control/vulnerabilities.json',
+                # 'data/solidifi_buggy_contracts/access_control/vulnerabilities.json',jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj
                 'data/smartbug-dataset/vulnerabilities.json']
             
             

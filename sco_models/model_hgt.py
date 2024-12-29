@@ -423,6 +423,7 @@ class HGTVulGraphClassifier(nn.Module):
         nx_g_data = generate_hetero_graph_data(nx_graph)
        
         self.total_nodes = len(nx_graph)
+        print(f"TOTAL NODES: {self.total_nodes}")
 
         # Get Node Labels
         self.node_ids_dict = get_node_ids_dict(nx_graph)
@@ -434,6 +435,7 @@ class HGTVulGraphClassifier(nn.Module):
         # self.symmetrical_global_graph_data = nx_g_data
         self.number_of_nodes = get_number_of_nodes(nx_graph)
         self.symmetrical_global_graph = dgl.heterograph(self.symmetrical_global_graph_data, num_nodes_dict=self.number_of_nodes)
+        
         # self.symmetrical_global_graph.ndata['filename'] = _node_tracker
         self.symmetrical_global_graph = self.symmetrical_global_graph.to(device)
         self.meta_paths = get_symmatrical_metapaths(self.symmetrical_global_graph)
@@ -465,6 +467,7 @@ class HGTVulGraphClassifier(nn.Module):
         print(f"NODE FEATURE {node_feature}\n\n")
         features = {}
         if node_feature == 'nodetype':
+            print(f"Node types: \n{ self.symmetrical_global_graph.ntypes}\n")
 
             for ntype in self.symmetrical_global_graph.ntypes:
                 features[ntype] = self._nodetype2onehot(ntype).repeat(self.symmetrical_global_graph.num_nodes(ntype), 1).to(self.device)

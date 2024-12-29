@@ -59,6 +59,7 @@ elif args['model'] == 'hgt':
     from sco_models.model_hgt import HGTVulGraphClassifier as GraphClassifier
 
 torch.manual_seed(args['seed'])
+
 ROOT = './experiments'
 DATA_ID = 0
 REPEAT = args['repeat']
@@ -356,23 +357,49 @@ def base_node2vec(dataset, bugtype, node2vec_embedded, file_name_dict, device):
         json.dump(report, f, indent=2)
 
 
+def initialize_parameter(param, is_weight=True, init_type='auto', seed=1, 
+                       mean=0.0, std=0.01, constant_val=None):
+    # if seed is not None:
+    #     torch.manual_seed(seed)
+    # seed is set at the start is 1
+    if constant_val is not None:
+        return torch.full_like(param, constant_val)
+        
+    if is_weight:
+        if init_type == 'auto':
+            if len(param.shape) >= 2:
+                return torch.nn.init.kaiming_normal_(torch.zeros_like(param))
+            return torch.nn.init.normal_(torch.zeros_like(param), mean=mean, std=std)
+        elif init_type == 'normal':
+            return torch.nn.init.normal_(torch.zeros_like(param), mean=mean, std=std)
+        elif init_type == 'uniform':
+            return torch.nn.init.uniform_(torch.zeros_like(param), -std, std)
+        elif init_type == 'xavier':
+            return torch.nn.init.xavier_normal_(torch.zeros_like(param))
+    
+    return torch.zeros_like(param)
+
 def pad_or_trim_weights(checkpoint_dict, model_dict):
     updated_dict = {}
-    for key, param in checkpoint_dict.items():
-        if key in model_dict:
-            model_param = model_dict[key]
+    for key, model_param in model_dict.items():
+        if key in checkpoint_dict:
+            param = checkpoint_dict[key]
             if param.shape != model_param.shape:
                 print(f"Adjusting layer {key}: {param.shape} -> {model_param.shape}")
-                # Pad or trim dimensions to match the model
                 param = match_dimensions(param, model_param)
-        updated_dict[key] = param
+            updated_dict[key] = param
+        else:
+            init_param = initialize_parameter(model_param, 'weight' in key)
+            print(f"Initializing missing layer {key}")
+            print(f"Shape: {init_param.shape}")
+            print(f"Values: \n{init_param}")
+            print(f"Stats - Mean: {init_param.mean():.4f}, Std: {init_param.std():.4f}")
+            print("-" * 50)
+            updated_dict[key] = init_param
     return updated_dict
 
 def match_dimensions(param, target_param):
-    """Adjusts the dimensions of the param tensor to match target_param."""
-    # Create a new tensor with the desired size
     new_param = torch.zeros_like(target_param)
-    # Determine slicing or filling indices
     slices = tuple(slice(0, min(p, t)) for p, t in zip(param.shape, target_param.shape))
     new_param[slices] = param[slices]
     return new_param
@@ -380,6 +407,9 @@ def match_dimensions(param, target_param):
 
 def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_only=False,verify_set=None):
     logs = f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/{bugtype}/'
+    #print(logs)
+    testlogs = f"./newMethods/logs/test_logs/{formatted_time}/{bugtype}" # f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
+
     #print(logs)
     testlogs = f"./newMethods/logs/test_logs/{formatted_time}/{bugtype}" # f'{ROOT}/logs/{TASK}/byte_code/{DATASET}/{BYTECODE}/{STRUCTURE}/{COMPRESSED_GRAPH}/nodetype/test_logs/{bugtype}/'
 
@@ -403,21 +433,22 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
     model.to(device)
     X_train, X_val, y_train, y_val = dataset
     X_verify,y_verify = None,None
-    
-    if test_only == False:
-        print(f" X_Train {X_train[0]} \n\n y_train{ y_train[0]}\n\n")
-        model = train(model, X_train, y_train, device)
-        
-    else:
-        X_verify,y_verify = verify_set
-        # print(f"Verify set:{len(verify_set)}\n\n")
+    save_path = os.path.join(output_models, f'hgt.pth')
 
-        # print(f"X_val:{len(X_val)}\n\n")
-        # print(f"y_val:{len(y_val)}\n\n")
+
+    if test_only == False:
+        print(f" X_Train = {X_train[0]} \n\n y_train = { y_train[0]}\n\n")
+        model = train(model, X_train, y_train, device)
+        torch.save(model.state_dict(), save_path)
+    else:
+        X_verify, y_verify = verify_set
+        print(f"X Verify:{len(X_verify)}\n\n")
+        print(f"y Verify:{len(y_verify)}\n\n")
 
         checkpoint = torch.load(join(output_models, f'hgt.pth'),weights_only=True)
         checkpoint_state_dict = checkpoint
         #print(checkpoint)
+
         model_state_dict = model.state_dict()
 
         # Adjust the checkpoint state_dict
@@ -428,10 +459,9 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
 
         logs = testlogs
 
-    save_path = os.path.join(output_models, f'hgt.pth')
-    torch.save(model.state_dict(), save_path)
     model.eval()
     with torch.no_grad():
+        print(f"Evaluating....")
         logits, hiddens = model(X_val) if test_only == False else model(X_verify)
         logits = logits.to(device)
         # test_acc, test_micro_f1, test_macro_f1 = score(y_val, logits)
@@ -440,9 +470,13 @@ def nodetype(compressed_graph, dataset, feature_extractor, bugtype, device,test_
             test_results = get_classification_report(y_val, logits, output_dict=True)
         else:
             print(f"Logits: {len(logits)} | Hiddens: {len(hiddens)} | y_verify: {len(y_verify)} | X_verify: {len(X_verify)}") 
-            test_results =  dict(zip(X_verify,logits.tolist()))
+            logits = nn.functional.softmax(logits, dim=1)
+            test_results =  dict(zip(X_verify, logits.tolist()))
 
-    save_last_hidden(hiddens, y_verify, X_verify, join(logs, 'last_hiddens.json'))
+    if test_only == False:
+        save_last_hidden(hiddens, y_val, X_val, join(logs, 'last_hiddens.json'))
+    else:
+        save_last_hidden(hiddens, y_verify, X_verify, join(logs, 'last_hiddens.json'))
 
     if os.path.isfile(join(logs, 'test_report.json')):
         with open(join(logs, 'test_report.json'), 'r') as f:
@@ -693,6 +727,7 @@ def zeros(compressed_graph, dataset, feature_dims, bugtype, device):
         report = [test_results]
     with open(join(logs, 'test_report.json'), 'w') as f:
         json.dump(report, f, indent=2)
+
 def full_test_execution(compressed_graph, dataset, verify_set , line_embedded, node2vec_embedded, bugtype):
     nodetype(compressed_graph, dataset, None, bugtype, device, test_only=True,verify_set=verify_set) ## default
 
@@ -749,7 +784,10 @@ def main(device):
             compressed_graph = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/compressed_graphs/{BYTECODE}_balanced_compressed_graphs.gpickle'
             
             #print(compressed_graph[0])
+            
+            #print(compressed_graph[0])
             nx_graph = nx.read_gpickle(compressed_graph)
+            #print(nx_graph)
             #print(nx_graph)
             file_name_dict = get_node_id_by_file_name(nx_graph)
             # label = f'{ROOT}/ge-sc-data/byte_code/{DATASET}/{BYTECODE}/gpickles/{bugtype}/clean_{file_counter[bugtype]}_buggy_curated_0/graph_labels.json'
@@ -768,7 +806,7 @@ def main(device):
                 vannotations = json.load(f)
             verify_compressed_graph = f'./newMethods/sampleDataset/{BYTECODE}/gpickles/compressed_graphs/{BYTECODE}_balanced_cfg_compressed_graphs.gpickle'
             verify_nx_graph = nx.read_gpickle(compressed_graph)
-            # print(verify_compressed_graph)
+            print(verify_compressed_graph)
             # print(verify_nx_graph)
             verify_file_name_dict = get_node_id_by_file_name(nx_graph)
             total_verify_files = tuple([vanno['contract_name'] for vanno in vannotations])
@@ -776,7 +814,7 @@ def main(device):
             print(f"Total verification files:{len(total_verify_files)}")
             verify_set = (total_verify_files, torch.tensor([vanno['targets'] for vanno in vannotations]))   
          
-            
+            print(f"Labels in verify (-1 for not set, and it suppose to only have -1): \n {set([vanno['targets'] for vanno in vannotations])}")
             
             assert len(total_files) <= len(annotations)
             # targets = []

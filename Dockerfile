@@ -1,4 +1,4 @@
-# Start with Ubuntu 20.04 base image
+# Start with Ubuntu 22.04 base image
 FROM ubuntu:22.04
 
 # Avoid prompts from apt
